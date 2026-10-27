@@ -1,4 +1,9 @@
-"""DuckDB warehouse schema for company financials and forensic scores."""
+"""DuckDB warehouse schema for company financials and forensic scores.
+
+Forensic metric columns are nullable. A ratio that cannot be computed is
+stored as NULL, and the paired text column holds the reason. Identity columns
+stay NOT NULL.
+"""
 
 from __future__ import annotations
 
@@ -74,6 +79,30 @@ _FORENSIC_SCORES_COLUMNS: tuple[tuple[str, str], ...] = (
     ("computed_at", "VARCHAR"),
 )
 
+# These are results, not warehouse keys. Missing inputs are NULL rather than zero.
+_NULLABLE_FORENSIC_COLUMNS = frozenset(
+    {
+        "altman_z_score",
+        "beneish_m_score",
+        "piotroski_f_score",
+        "ebit_margin_pct",
+        "ebit_margin_yoy_change_bps",
+        "revenue_growth_yoy_pct",
+        "rd_to_revenue_pct",
+        "ai_hype_score",
+        "ai_roi_realization_score",
+        "ai_washing_score",
+        "dsri",
+        "gmi",
+        "aqi",
+        "sgi",
+        "depi",
+        "sgai",
+        "lvgi",
+        "tata",
+    }
+)
+
 _TABLES: dict[str, tuple[tuple[str, str], ...]] = {
     "company_financials": _COMPANY_FINANCIALS_COLUMNS,
     "forensic_scores": _FORENSIC_SCORES_COLUMNS,
@@ -93,8 +122,16 @@ def get_duckdb_conn(path: Path | str | None = None) -> duckdb.DuckDBPyConnection
     return duckdb.connect(str(db_path))
 
 
+def _column_is_nullable(table: str, name: str) -> bool:
+    return table == "forensic_scores" and name in _NULLABLE_FORENSIC_COLUMNS
+
+
 def _create_table_sql(table: str, columns: tuple[tuple[str, str], ...]) -> str:
-    column_sql = ",\n".join(f"    {name} {data_type} NOT NULL" for name, data_type in columns)
+    parts: list[str] = []
+    for name, data_type in columns:
+        constraint = "" if _column_is_nullable(table, name) else " NOT NULL"
+        parts.append(f"    {name} {data_type}{constraint}")
+    column_sql = ",\n".join(parts)
     primary_key = ", ".join(_PRIMARY_KEY)
     return (
         f"CREATE TABLE IF NOT EXISTS {table} (\n"
@@ -102,6 +139,26 @@ def _create_table_sql(table: str, columns: tuple[tuple[str, str], ...]) -> str:
         f"    PRIMARY KEY ({primary_key})\n"
         f")"
     )
+
+
+def _relax_forensic_nulls(conn: duckdb.DuckDBPyConnection) -> None:
+    """Drop NOT NULL on metric columns created by the original TASK-02 DDL.
+
+    ``CREATE TABLE IF NOT EXISTS`` does not alter a warehouse that already exists.
+    """
+    present = {row[0] for row in conn.execute("SHOW TABLES").fetchall()}
+    if "forensic_scores" not in present:
+        return
+    found = conn.execute(
+        """
+        SELECT column_name, is_nullable
+        FROM information_schema.columns
+        WHERE table_schema = 'main' AND table_name = 'forensic_scores'
+        """
+    ).fetchall()
+    for name, is_nullable in found:
+        if name in _NULLABLE_FORENSIC_COLUMNS and is_nullable == "NO":
+            conn.execute(f"ALTER TABLE forensic_scores ALTER COLUMN {name} DROP NOT NULL")
 
 
 def _schema_problems(conn: duckdb.DuckDBPyConnection) -> list[str]:
@@ -122,7 +179,10 @@ def _schema_problems(conn: duckdb.DuckDBPyConnection) -> list[str]:
             """,
             [table],
         ).fetchall()
-        expected = [(name, data_type, "NO") for name, data_type in columns]
+        expected = [
+            (name, data_type, "YES" if _column_is_nullable(table, name) else "NO")
+            for name, data_type in columns
+        ]
         if found != expected:
             problems.append(
                 f"{table} columns are {found}, expected {expected}"
@@ -168,6 +228,7 @@ def init_db(path: Path | str | None = None) -> None:
     try:
         for table, columns in _TABLES.items():
             conn.execute(_create_table_sql(table, columns))
+        _relax_forensic_nulls(conn)
         problems = _schema_problems(conn)
     finally:
         conn.close()

@@ -84,6 +84,31 @@ TABLES = {
 }
 PRIMARY_KEY = ("ticker", "fiscal_year")
 
+# Metric results may be unknown. The text columns next to them stay required
+# so a NULL score still has a reason.
+NULLABLE_FORENSIC = frozenset(
+    {
+        "altman_z_score",
+        "beneish_m_score",
+        "piotroski_f_score",
+        "ebit_margin_pct",
+        "ebit_margin_yoy_change_bps",
+        "revenue_growth_yoy_pct",
+        "rd_to_revenue_pct",
+        "ai_hype_score",
+        "ai_roi_realization_score",
+        "ai_washing_score",
+        "dsri",
+        "gmi",
+        "aqi",
+        "sgi",
+        "depi",
+        "sgai",
+        "lvgi",
+        "tata",
+    }
+)
+
 
 def _placeholder(data_type: str) -> str | int | float:
     if data_type == "VARCHAR":
@@ -144,6 +169,12 @@ def test_default_database_path() -> None:
     assert DEFAULT_DUCKDB_PATH.parent.name == "data"
 
 
+def _expected_nullable(table: str, name: str) -> str:
+    if table == "forensic_scores" and name in NULLABLE_FORENSIC:
+        return "YES"
+    return "NO"
+
+
 def test_tables_columns_types_and_primary_keys() -> None:
     with tempfile.TemporaryDirectory() as raw:
         db_path = Path(raw) / "nested" / "alphasentinel.duckdb"
@@ -156,7 +187,8 @@ def test_tables_columns_types_and_primary_keys() -> None:
             assert set(TABLES) <= tables
             for table, columns in TABLES.items():
                 assert _column_rows(conn, table) == [
-                    (name, data_type, "NO") for name, data_type in columns
+                    (name, data_type, _expected_nullable(table, name))
+                    for name, data_type in columns
                 ]
                 assert _primary_key(conn, table) == PRIMARY_KEY
         finally:
@@ -199,6 +231,57 @@ def test_duplicate_primary_key_is_rejected() -> None:
                 _insert_placeholder(conn, "company_financials")
         finally:
             conn.close()
+
+
+def test_init_db_relaxes_legacy_forensic_not_null(tmp_path: Path) -> None:
+    """A TASK-02 warehouse marked every forensic column NOT NULL."""
+    db_path = tmp_path / "legacy.duckdb"
+    column_sql = ",\n".join(
+        f"    {name} {data_type} NOT NULL" for name, data_type in FORENSIC_SCORES
+    )
+    conn = duckdb.connect(str(db_path))
+    conn.execute(
+        "CREATE TABLE forensic_scores (\n"
+        f"{column_sql},\n"
+        "    PRIMARY KEY (ticker, fiscal_year)\n"
+        ")"
+    )
+    conn.close()
+
+    init_db(db_path)
+    conn = get_duckdb_conn(db_path)
+    try:
+        nullable = {name: flag for name, _, flag in _column_rows(conn, "forensic_scores")}
+        assert nullable["altman_z_score"] == "YES"
+        assert nullable["piotroski_f_score"] == "YES"
+        assert nullable["tata"] == "YES"
+        assert nullable["altman_zone"] == "NO"
+        assert nullable["computed_at"] == "NO"
+        conn.execute(
+            """
+            INSERT INTO forensic_scores (
+                ticker, company_name, sector, fiscal_year, data_source_mode,
+                altman_z_score, altman_zone, beneish_m_score, beneish_flag,
+                piotroski_f_score, piotroski_tier,
+                ebit_margin_pct, ebit_margin_yoy_change_bps, revenue_growth_yoy_pct,
+                rd_to_revenue_pct, ai_hype_score, ai_roi_realization_score,
+                ai_washing_score, ai_washing_status,
+                dsri, gmi, aqi, sgi, depi, sgai, lvgi, tata, computed_at
+            ) VALUES (
+                'TEST', 'TEST', 'TEST', 2025, 'TEST',
+                NULL, 'total_assets is zero', NULL, 'missing prior fiscal year 2024',
+                NULL, 'missing prior fiscal year 2024',
+                NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'total_word_count is zero',
+                NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'TEST'
+            )
+            """
+        )
+        stored = conn.execute(
+            "SELECT altman_z_score, beneish_m_score, piotroski_f_score FROM forensic_scores"
+        ).fetchone()
+        assert stored == (None, None, None)
+    finally:
+        conn.close()
 
 
 def test_validate_schema_rejects_missing_or_empty_database() -> None:
