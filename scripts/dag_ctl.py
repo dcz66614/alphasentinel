@@ -14,19 +14,61 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DB_PATH = PROJECT_ROOT / "state" / "dag_state.db"
 
 INITIAL_TASKS = [
-    ("TASK-01", 1, "@CommanderBot", "[]", "scripts/dag_ctl.py", "python3 scripts/dag_ctl.py status"),
-    ("TASK-02", 2, "@SpecArchitectBot", '["TASK-01"]', "src/db_schema.py", "pytest tests/test_schema.py"),
-    ("TASK-03", 3, "@DataEngineBot", '["TASK-02"]', "src/ingestor.py", "pytest tests/test_ingestor.py"),
-    ("TASK-04", 4, "@QuantForensicBot", '["TASK-03"]', "src/forensic_engine.py", "pytest tests/test_forensic.py"),
-    ("TASK-05", 5, "@UIAndReportBot", '["TASK-04"]', "src/report_compiler.py", "pytest tests/test_reports.py"),
-    ("TASK-06", 6, "@UIAndReportBot", '["TASK-04"]', "src/api_server.py", "pytest tests/test_api.py"),
+    (
+        "TASK-01",
+        1,
+        "@CommanderBot",
+        "[]",
+        "scripts/dag_ctl.py",
+        "python scripts/dag_ctl.py status",
+    ),
+    (
+        "TASK-02",
+        2,
+        "@SpecArchitectBot",
+        '["TASK-01"]',
+        "src/alphasentinel/db_schema.py",
+        "python -m pytest -q tests/test_schema.py",
+    ),
+    (
+        "TASK-03",
+        3,
+        "@DataEngineBot",
+        '["TASK-02"]',
+        "src/alphasentinel/ingestor.py",
+        "python -m pytest -q tests/test_ingestor.py",
+    ),
+    (
+        "TASK-04",
+        4,
+        "@QuantForensicBot",
+        '["TASK-03"]',
+        "src/alphasentinel/forensic_engine.py",
+        "python -m pytest -q tests/test_forensic.py",
+    ),
+    (
+        "TASK-05",
+        5,
+        "@UIAndReportBot",
+        '["TASK-04"]',
+        "src/alphasentinel/report_compiler.py",
+        "python -m pytest -q tests/test_reports.py",
+    ),
+    (
+        "TASK-06",
+        6,
+        "@UIAndReportBot",
+        '["TASK-04"]',
+        "src/alphasentinel/api_server.py",
+        "python -m pytest -q tests/test_api.py",
+    ),
     (
         "TASK-07",
         7,
         "@UIAndReportBot",
         '["TASK-05","TASK-06"]',
-        "src/dashboard.py",
-        "python3 -m py_compile src/dashboard.py",
+        "src/alphasentinel/dashboard.py",
+        "python -m py_compile src/alphasentinel/dashboard.py",
     ),
     (
         "TASK-08",
@@ -34,7 +76,7 @@ INITIAL_TASKS = [
         "@UIAndReportBot",
         '["TASK-07"]',
         "deliverables/PROJECT_CHARTER.docx",
-        "python3 scripts/build_four_deliverables.py --verify",
+        "python scripts/build_four_deliverables.py --verify",
     ),
     (
         "TASK-09",
@@ -42,7 +84,7 @@ INITIAL_TASKS = [
         "@CommanderBot",
         '["TASK-08"]',
         "reports/AlphaSentinel_Executive_Briefing.docx",
-        "python3 scripts/run_pipeline.py --verify-all",
+        "python scripts/run_pipeline.py --verify-all",
     ),
 ]
 

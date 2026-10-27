@@ -146,6 +146,52 @@ def test_verify_failure_increments_attempts_then_blocks(db_path: Path) -> None:
     assert row["attempts"] == 3
 
 
+def test_seeded_artifacts_and_verify_commands(db_path: Path) -> None:
+    assert run_dag("init", "--db", str(db_path)).returncode == 0
+
+    expected = {
+        "TASK-01": ("scripts/dag_ctl.py", "python scripts/dag_ctl.py status"),
+        "TASK-02": (
+            "src/alphasentinel/db_schema.py",
+            "python -m pytest -q tests/test_schema.py",
+        ),
+        "TASK-03": (
+            "src/alphasentinel/ingestor.py",
+            "python -m pytest -q tests/test_ingestor.py",
+        ),
+        "TASK-04": (
+            "src/alphasentinel/forensic_engine.py",
+            "python -m pytest -q tests/test_forensic.py",
+        ),
+        "TASK-05": (
+            "src/alphasentinel/report_compiler.py",
+            "python -m pytest -q tests/test_reports.py",
+        ),
+        "TASK-06": (
+            "src/alphasentinel/api_server.py",
+            "python -m pytest -q tests/test_api.py",
+        ),
+        "TASK-07": (
+            "src/alphasentinel/dashboard.py",
+            "python -m py_compile src/alphasentinel/dashboard.py",
+        ),
+        "TASK-08": (
+            "deliverables/PROJECT_CHARTER.docx",
+            "python scripts/build_four_deliverables.py --verify",
+        ),
+        "TASK-09": (
+            "reports/AlphaSentinel_Executive_Briefing.docx",
+            "python scripts/run_pipeline.py --verify-all",
+        ),
+    }
+
+    for task_id, (artifact, verify_cmd) in expected.items():
+        row = get_task(db_path, task_id)
+        assert row["artifact"] == artifact
+        assert row["verify_cmd"] == verify_cmd
+        assert "python3" not in row["verify_cmd"]
+
+
 def test_verify_unknown_task_fails(db_path: Path) -> None:
     assert run_dag("init", "--db", str(db_path)).returncode == 0
 
