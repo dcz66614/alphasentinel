@@ -1,5 +1,5 @@
 # 任务 A00：AlphaSentinel 脚手架
-工作目录：<repo>-codex（绝对路径）。只在此目录内写文件。
+工作目录：C:\Users\Du200\Projects\alphasentinel-codex（绝对路径）。只在此目录内写文件。
 目标：建 Python 3.11+ 项目骨架。
 - pyproject.toml（name=alphasentinel, MIT, build-system setuptools>=77, 依赖：duckdb, edgartools, pandas, fastapi, streamlit, python-docx, yfinance；dev：pytest, ruff）
 - LICENSE(MIT)、README.md（一段简介）、.gitignore（data/*.duckdb, .venv, __pycache__）
