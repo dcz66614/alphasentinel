@@ -1,0 +1,5 @@
+You are a read-only reviewer. Working directory: C:\Users\Du200\Projects\alphasentinel\.orchestra\review_A09 (detached at bba9104). Diff: git diff 5a23a5b..bba9104 (base..head, head is new).
+Task specs: C:\Users\Du200\Projects\alphasentinel\.orchestra\A09_grok_prompt.md and C:\Users\Du200\Projects\alphasentinel\.orchestra\A09fix_grok_prompt.md; reports C:\Users\Du200\Projects\alphasentinel\.orchestra\A09_report.md and C:\Users\Du200\Projects\alphasentinel\.orchestra\A09fix_report.md; source spec TASK-09 in docs\spec\*.txt.
+Check: run_pipeline orchestration and --verify-all correct; per-ticker failures recorded honestly with no zero-fill/interpolation/fabrication; XBRL tag fallbacks (AMZN/ORCL/META) are genuine SEC tags with real fixtures documented in tests/fixtures/README.md; numbers in reports match command output; tests self-contained; no mechanisms beyond spec.
+Run tests inside the worktree: uv run python -m pytest -q. Do not modify files.
+End with one line: VERDICT: PASS or VERDICT: FAIL - <reasons>.

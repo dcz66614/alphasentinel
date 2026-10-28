@@ -1,0 +1,11 @@
+# 本调度启动的进程
+- A00 72360, review_A00 49712, A01 71764, review_A01 74516, A02 86136, review_A02 35568 (done)
+- A03 grok cmd 53644 / grok.exe 76192 (running)
+- review_A10 attempt2 cmd 39116 (started 04:07)
+- final_review_gemini cmd 46352 (started 04:33)
+- A11 grok (final-review fixes) cmd 18500 (started 05:0x 2026-10-28)
+- review_A11 attempt1 (copilot) cmd 38240 (started 05:34 2026-10-28)
+- review_A11 r2 (opencode deepseek-v4.1-flash-free) cmd 70900 (started 06:10 2026-10-28)
+- review_A11 r2 attempt2 (opencode, files attached) cmd 70928 (started 06:14)
+- review_A11 r2 attempt3 cmd 54388 (started 06:16)
+- review_A11 r2 opencode attempt3 killed 06:39 (stalled, no output); r2 via agy gemini-3.8-flash-high powershell 7560 (started 06:40 2026-10-28, worktree review_A11_gemini)

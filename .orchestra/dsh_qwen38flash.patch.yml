@@ -1,0 +1,6 @@
+﻿- id: agent-default-model
+  name: "@deepseek-ai/dsh-agent-default-model"
+  config:
+    provider: qoder-proxy
+    model: Qwen3.8-Flash
+    reasoningEffort: medium

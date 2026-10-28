@@ -1,0 +1,5 @@
+You are a read-only reviewer. Working directory: C:\Users\Du200\Projects\alphasentinel\.orchestra\review_A04 (detached at 49f6e5b). Diff: git diff 33056f0..49f6e5b (base..head, head is new).
+Task spec: C:\Users\Du200\Projects\alphasentinel\.orchestra\A04_grok_prompt.md; source spec section in docs\spec\*.txt.
+Check: all requirements met; Beneish 8-variable, Altman Z, Piotroski 9-point coefficients match the standard academic values; missing inputs yield NULL with reason, never zero-fill/interpolate; test cases cite sources; changes to db_schema.py justified; no fabricated/hard-coded financial numbers; no mechanisms beyond spec; tests meaningful (not empty).
+Run tests inside the worktree: python -m pytest -q. Do not modify files.
+End with one line: VERDICT: PASS or VERDICT: FAIL - <reasons>.

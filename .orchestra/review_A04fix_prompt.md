@@ -1,0 +1,5 @@
+You are a read-only reviewer. Working directory: C:\Users\Du200\Projects\alphasentinel\.orchestra\review_A04fix (detached at 87e9e6a). Diff: git diff c19b102..87e9e6a (base..head, head is new).
+Task spec: C:\Users\Du200\Projects\alphasentinel\.orchestra\A04_grok_prompt.md; source spec section in docs\spec\*.txt.
+Check: all requirements met; also see C:\Users\Du200\Projects\alphasentinel\.orchestra\A04fix_grok_prompt.md; Beneish 8-var, Altman Z, Piotroski 9-point standard coefficients; missing inputs -> NULL with reason; no fabricated/hard-coded financial numbers; no mechanisms beyond spec; tests meaningful and self-contained (must pass in a clean checkout with no data/ directory).
+Run tests inside the worktree: python -m pytest -q (or uv run python -m pytest -q). Do not modify files.
+End with one line: VERDICT: PASS or VERDICT: FAIL - <reasons>.

@@ -1,0 +1,10 @@
+# Task A11: fix items from Gemini final review (FINAL_REVIEW_gemini.md, VERDICT PASS with majors)
+Working directory: C:\Users\Du200\Projects\alphasentinel-codex (branch codex, HEAD 3a8478d = master). Read: C:\Users\Du200\Projects\alphasentinel\.orchestra\FINAL_REVIEW_gemini.md (section 5) and the authoritative spec docs\spec\*.txt (TASK-06, TASK-07, TASK-09).
+Fix exactly these items, nothing beyond spec:
+1. MAJOR-01: expand README.md with install and run instructions for Windows and Linux: uv sync, pytest, ruff, running the data pipeline (scripts/run_pipeline.py incl. --offline / --verify-all), FastAPI server, Streamlit dashboard, building deliverables. Only document commands that really work; run them to confirm.
+2. MAJOR-02: scripts/run_pipeline.py briefing_ready()/--verify-all must not fail on a fresh clean clone just because reports/ has not been generated yet (generate it or check correctly per spec TASK-09). Add a test.
+3. MAJOR-03: api_server.py add the spec REST endpoints GET /api/v1/scores and GET /api/v1/ticker/{symbol} (keep existing endpoints working). Add tests.
+4. MINOR-01: dashboard: add the 4 portfolio-level KPI summary cards at the top as required by spec TASK-07. Add/extend test.
+5. MINOR-03: add reports/ (runtime output) to .gitignore.
+Rules: data honesty - no fabricated, random, zero-filled or interpolated financial values; NULL stays NULL. Do not use the TEST set. Tests must be self-contained (pass on a clean clone without data/cache). Do not commit deliverables/*.docx changes or the reports/ directory. Do not call paid APIs.
+Acceptance: uv run python -m pytest -q all pass; uv run ruff check . clean. Commit once with message "A11 final review fixes". Write a report to C:\Users\Du200\Projects\alphasentinel-codex\A11_report.md (untracked, do not commit) listing each item, files changed, and exact pytest/ruff output.

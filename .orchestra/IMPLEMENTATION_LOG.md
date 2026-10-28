@@ -1,0 +1,17 @@
+﻿- A00 scaffold: d0f2a79 (opencode deepseek-v4.1-flash-free). Self-review pytest 1 passed, ruff clean; Copilot VERDICT PASS. Merged ff to master.
+- A01 dag_ctl: ca04274 (opencode deepseek-v4.1-flash-free; attempt1 rejected reading spec outside worktree, attempt2 ok). pytest 8 passed, ruff clean; Copilot PASS. Merged.
+- A02 db_schema: 9923452 (grok-4.7 high). pytest 14 passed, ruff clean; Copilot PASS. Merged.
+- A03 ingestor: 33056f0 (grok-4.7 high). pytest 21 passed, ruff clean; real smoke AAPL/MSFT 4 rows; Copilot PASS (attempt2, 1.92 AIC; attempt1 failed on --max-ai-credits min 30). Merged.
+- A06 api_server: c19b102 (opencode wb/kimi-k3.1-pro, paid relay). Copilot PASS (1.82 AIC), 23 passed. Merged.
+- A04 forensic_engine: 49f6e5b (grok) Copilot FAIL (2.61 AIC): tests need uncommitted data/cache -> A04fix.
+- A04+A04fix: 69fffd1, 87e9e6a (grok). Copilot PASS (1.09 AIC), clean clone 32 passed. Merged.
+- A05 report_compiler: 4d3459f -> rebased 1e8c69c (opencode wb/kimi-k3.1-pro). Copilot PASS (1.41 AIC); after rebase 36 passed, ruff clean. Merged.
+- A07 dashboard: 8d4d158 (opencode wb/kimi-k3.1-pro). Copilot PASS (0.72 AIC). Merged.
+- A08 attempt1 (agy) failed: PS quoting of prompt with ASCII quotes; attempt2 relaunched.
+- A08 deliverables: 58b0a2c -> rebased 5a23a5b (agy gemini-3.8-flash-high). 48 passed; Copilot PASS (2.07 AIC). Merged.
+- A09+A09fix pipeline: 97408ef, bba9104 (grok). Real run: 6/10 tickers ingested (META/AMZN/PLTR/ORCL fail on genuinely missing tags, recorded honestly); --verify-all exit 0; 62 passed; Copilot PASS (3.25 AIC). Merged.
+- A10 close data gaps: 3a8478d (grok). Copilot review attempt1 FAIL only because reviewer read report from wrong path (1.85 AIC); attempt2 relaunched 04:07.
+- A10 review attempt2: Copilot PASS (2.53 AIC); dispatcher acceptance 63 passed, ruff clean, no zero-fill/interpolation in diff. ff-merged to master 04:3x. Note: reviewer overwrote A10_report.md via shell despite --deny-tool write; saved as REVIEW_A10.md, original restored from codex worktree.
+- Final review: agy gemini-3.8-flash-high launched on master 3a8478d in .orchestra\review_final -> FINAL_REVIEW_gemini.md
+- Final review: agy gemini-3.8-flash-high VERDICT PASS (EXIT 0, 04:40); 63 passed, ruff clean; majors: README Win/Linux, run_pipeline --verify-all on clean clone, /api/v1 endpoints; TASK-06/07 PARTIAL.
+- A11 final-review fixes (MAJOR-01..03, MINOR-01, MINOR-03): grok-4.7 high launched in alphasentinel-codex 2026-10-28 05:0x, log .orchestra\A11_grok.log, prompt A11_grok_prompt.md. Needs Copilot review + second model review after.
