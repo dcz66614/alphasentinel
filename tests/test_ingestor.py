@@ -13,10 +13,16 @@ from pathlib import Path
 
 import pytest
 
+from alphasentinel.db_schema import get_duckdb_conn
 from alphasentinel.ingestor import (
+    FLOW_CONCEPTS,
+    INSTANT_CONCEPTS,
     SPEC_SEC_IDENTITY,
     CacheMissError,
     IngestError,
+    _pick_value,
+    _resolve_sga,
+    _rows_from_cache,
     ingest_tickers,
     insider_net_sell_ratio,
     main,
@@ -27,7 +33,13 @@ from alphasentinel.ingestor import (
 FIXTURES = Path(__file__).parent / "fixtures"
 AAPL_FIXTURE = FIXTURES / "aapl_companyfacts_excerpt.json"
 MSFT_FIXTURE = FIXTURES / "msft_companyfacts_excerpt.json"
+META_FIXTURE = FIXTURES / "meta_companyfacts_excerpt.json"
+AMZN_FIXTURE = FIXTURES / "amzn_companyfacts_excerpt.json"
+ORCL_FIXTURE = FIXTURES / "orcl_companyfacts_excerpt.json"
+PLTR_FIXTURE = FIXTURES / "pltr_companyfacts_excerpt.json"
+GOOGL_FIXTURE = FIXTURES / "googl_companyfacts_excerpt.json"
 AAPL_FORM4 = FIXTURES / "aapl_form4_0000320193-23-000088.xml"
+OFFLINE_CACHE = FIXTURES / "offline_cache"
 
 MIN_ANNUAL_DAYS = 300
 MAX_ANNUAL_DAYS = 380
@@ -164,6 +176,188 @@ def test_missing_concept_is_not_zero_filled() -> None:
     del payload["facts"]["us-gaap"]["OperatingIncomeLoss"]
     with pytest.raises(IngestError, match="ebit"):
         normalize_company_facts(payload)
+
+
+def _revenue_fact(payload: dict, period_end: str) -> dict:
+    for name in FLOW_CONCEPTS["revenue"]:
+        try:
+            return _own_year_fact(_unit_rows(payload, name, "USD"), period_end)
+        except AssertionError:
+            continue
+    raise AssertionError(f"no revenue fact for {period_end}")
+
+
+def test_meta_shares_outstanding_is_not_the_weighted_average() -> None:
+    """META files no CommonStockSharesOutstanding. The EPS average is not a substitute."""
+    payload = _load(META_FIXTURE)
+    assert "CommonStockSharesOutstanding" not in payload["facts"]["us-gaap"]
+    period_end = "2025-12-31"
+    basic = _own_year_fact(
+        _unit_rows(payload, "WeightedAverageNumberOfSharesOutstandingBasic", "shares"),
+        period_end,
+    )
+    assert basic.get("start")
+    assert basic["val"] > 0
+    with pytest.raises(IngestError, match="shares_outstanding") as raised:
+        normalize_company_facts(payload)
+    assert "2025-12-31" in str(raised.value)
+    assert "2024-12-31" in str(raised.value)
+    assert str(int(basic["val"])) not in str(raised.value)
+
+
+def test_amzn_sga_uses_marketing_expense() -> None:
+    """Amazon reports MarketingExpense and does not report the combined selling tag."""
+    payload = _load(AMZN_FIXTURE)
+    concepts = payload["facts"]["us-gaap"]
+    assert "MarketingExpense" in concepts
+    assert "SellingAndMarketingExpense" not in concepts
+    assert "SellingGeneralAndAdministrativeExpense" not in concepts
+    assert "ResearchAndDevelopmentExpense" not in concepts
+    with pytest.raises(IngestError, match="rd_expense") as raised:
+        normalize_company_facts(payload)
+    message = str(raised.value)
+    assert "sga" not in message
+    assert "total_liabilities" in message
+    for period_end in ("2025-12-31", "2024-12-31"):
+        revenue = _revenue_fact(payload, period_end)
+        accession = revenue["accn"]
+        sga = _resolve_sga(payload, period_end, accession)
+        marketing = _own_year_fact(
+            _unit_rows(payload, "MarketingExpense", "USD"), period_end, accession
+        )
+        admin = _own_year_fact(
+            _unit_rows(payload, "GeneralAndAdministrativeExpense", "USD"),
+            period_end,
+            accession,
+        )
+        assert sga == marketing["val"] + admin["val"]
+        assert sga > 0
+
+
+def test_orcl_long_term_debt_uses_notes_payable() -> None:
+    """Oracle's latest 10-K files noncurrent notes as LongTermNotesPayable."""
+    payload = _load(ORCL_FIXTURE)
+    concepts = payload["facts"]["us-gaap"]
+    assert "LongTermDebtNoncurrent" not in concepts
+    assert "LongTermNotesPayable" in concepts
+    old_debt = _unit_rows(payload, "LongTermDebt", "USD")
+    assert any(fact.get("end") == "2022-05-31" and fact.get("val") == 0 for fact in old_debt)
+    with pytest.raises(IngestError, match="cogs") as raised:
+        normalize_company_facts(payload)
+    message = str(raised.value)
+    assert "long_term_debt" not in message
+    assert "2026-05-31" in message
+    assert "2025-05-31" in message
+    for period_end in ("2026-05-31", "2025-05-31"):
+        revenue = _revenue_fact(payload, period_end)
+        accession = revenue["accn"]
+        picked = _pick_value(
+            payload,
+            INSTANT_CONCEPTS["long_term_debt"],
+            period_end,
+            flow=False,
+            unit="USD",
+            accession=accession,
+        )
+        notes = _own_year_fact(
+            _unit_rows(payload, "LongTermNotesPayable", "USD"), period_end, accession
+        )
+        assert picked is not None
+        assert picked[0] == notes["val"]
+        assert picked[0] > 0
+
+
+def test_googl_prior_year_uses_the_own_10k_tag() -> None:
+    """Alphabet's Revenues tag repeats 2024 inside the next 10-K. The own 10-K is the other tag."""
+    payload = _load(GOOGL_FIXTURE)
+    comparative = [
+        fact
+        for fact in _unit_rows(payload, "Revenues", "USD")
+        if fact.get("end") == "2024-12-31" and _is_annual(fact)
+    ]
+    assert comparative
+    assert all(fact.get("fy") != 2024 for fact in comparative)
+    own = _own_year_fact(
+        _unit_rows(payload, "RevenueFromContractWithCustomerExcludingAssessedTax", "USD"),
+        "2024-12-31",
+    )
+    assert own["fy"] == 2024
+    assert own["accn"] != comparative[0]["accn"]
+    rows = {row["fiscal_year"]: row for row in normalize_company_facts(payload)}
+    assert rows[2024]["accession"] == own["accn"]
+    assert rows[2024]["revenue"] == own["val"]
+    current = _own_year_fact(_unit_rows(payload, "Revenues", "USD"), "2025-12-31")
+    assert rows[2025]["accession"] == current["accn"]
+    assert rows[2025]["revenue"] == current["val"]
+
+
+def test_pltr_omitted_long_term_debt_is_not_filled_with_zero() -> None:
+    """Palantir's 2021 fact is zero. Later 10-Ks omit the tag. That zero is not reused."""
+    payload = _load(PLTR_FIXTURE)
+    debt = _unit_rows(payload, "LongTermDebtNoncurrent", "USD")
+    assert any(fact.get("end") == "2021-12-31" and fact.get("val") == 0 for fact in debt)
+    assert not any(fact.get("end") in {"2024-12-31", "2025-12-31"} for fact in debt)
+    lease = _own_year_fact(
+        _unit_rows(payload, "OperatingLeaseLiabilityNoncurrent", "USD"),
+        "2025-12-31",
+    )
+    assert lease["val"] > 0
+    with pytest.raises(IngestError, match="long_term_debt") as raised:
+        normalize_company_facts(payload)
+    message = str(raised.value)
+    assert "2025-12-31" in message
+    assert "2024-12-31" in message
+
+
+def test_incomplete_ticker_is_skipped_and_not_zero_filled(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from alphasentinel import ingestor
+
+    original_rows = _rows_from_cache
+    meta_gap = (
+        "incomplete 10-K periods (2025-12-31: shares_outstanding; "
+        "2024-12-31: shares_outstanding)"
+    )
+
+    def download(_cache_dir: Path, ticker: str) -> None:
+        if ticker == "META":
+            raise IngestError(meta_gap)
+        if ticker != "AAPL":
+            raise AssertionError(ticker)
+
+    def rows(cache_dir: Path, ticker: str, *, offline: bool) -> list[dict]:
+        if ticker == "META":
+            raise AssertionError(
+                f"failed ticker was loaded from {cache_dir} offline={offline}"
+            )
+        return original_rows(OFFLINE_CACHE, ticker, offline=True)
+
+    monkeypatch.setattr(ingestor, "download_ticker", download)
+    monkeypatch.setattr(ingestor, "_rows_from_cache", rows)
+    database = tmp_path / "warehouse.duckdb"
+    batch = ingest_tickers(
+        ["AAPL", "META"],
+        db_path=database,
+        cache_dir=tmp_path / "cache",
+        offline=False,
+    )
+
+    assert batch.written == 2
+    assert batch.failures == (("META", meta_gap),)
+    connection = get_duckdb_conn(database)
+    try:
+        tickers = connection.execute(
+            "SELECT DISTINCT ticker FROM company_financials ORDER BY ticker"
+        ).fetchall()
+        shares = connection.execute(
+            "SELECT MIN(shares_outstanding) FROM company_financials"
+        ).fetchone()
+    finally:
+        connection.close()
+    assert tickers == [("AAPL",)]
+    assert shares is not None
+    assert shares[0] > 0
 
 
 def test_offline_without_cache_raises(tmp_path: Path) -> None:

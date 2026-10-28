@@ -167,9 +167,16 @@ def run_pipeline(
     print(f"[PIPELINE] tickers={','.join(symbols)} offline={str(offline).lower()}")
 
     try:
-        ingested = ingest_tickers(symbols, db_path=database, cache_dir=cache, offline=offline)
+        batch = ingest_tickers(symbols, db_path=database, cache_dir=cache, offline=offline)
     except IngestError as exc:
         print(f"[PIPELINE_FAIL] {exc}", file=sys.stderr)
+        return 1
+
+    ingested = batch.written
+    for ticker, reason in batch.failures:
+        print(f"[PIPELINE] ticker_fail {ticker} {reason}", file=sys.stderr)
+    if ingested == 0:
+        print("[PIPELINE_FAIL] no company-year rows were written", file=sys.stderr)
         return 1
 
     print(f"[PIPELINE] ingested_records={ingested}")
@@ -186,12 +193,18 @@ def run_pipeline(
 
     deliverable_code = _load_build_and_verify()(deliverables)
     minimum_records = len(symbols) * 2
-    if ingested < minimum_records or len(scores) < len(symbols) or deliverable_code != 0:
+    failed_tickers = ",".join(ticker for ticker, _reason in batch.failures)
+    if (
+        batch.failures
+        or ingested < minimum_records
+        or len(scores) < len(symbols)
+        or deliverable_code != 0
+    ):
         print("[PIPELINE_FAIL] Verification checks did not meet minimum thresholds.")
         print(
             f"[PIPELINE_FAIL] ingested_records={ingested} "
             f"scored_companies={len(scores)} deliverables_exit={deliverable_code} "
-            f"minimum_records={minimum_records}"
+            f"minimum_records={minimum_records} failed_tickers={failed_tickers or '-'}"
         )
         return 1
 

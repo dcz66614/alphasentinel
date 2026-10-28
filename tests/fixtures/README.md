@@ -135,3 +135,76 @@ Form 4 files, copied whole, chosen the same way as AAPL:
 Price rows kept are cached sessions on the period end or within the prior 14 days:
 2025-06-16 to 2025-06-30, and 2026-06-16 to 2026-06-30.
 File: `offline_cache/MSFT/prices.csv`
+
+## Tag-gap excerpts
+
+Same cut rules as the AAPL and MSFT excerpts above: `cik`, `entityName`, and the
+us-gaap concepts named below. `label` and `description` were copied when the
+response had them. Units are `USD` and `shares` only. Facts kept are 10-K and
+10-K/A rows. Amounts were not typed by hand.
+
+Downloaded: 2026-10-28, except META, which was cut from the companyfacts file
+already in `data/cache/META/` from the A09 pipeline download of the same URL.
+
+Where a concept is absent from the excerpt, it was absent from that response
+for the kept periods. Nothing was added to fill the gap.
+
+### META
+
+- CIK: 0001326801
+- Source URL: https://data.sec.gov/api/xbrl/companyfacts/CIK0001326801.json
+- Period ends kept: 2024-12-31, 2025-12-31
+- File: `meta_companyfacts_excerpt.json`
+- `CommonStockSharesOutstanding` is not in the response. The excerpt keeps
+  `WeightedAverageNumberOfSharesOutstandingBasic` and
+  `WeightedAverageNumberOfDilutedSharesOutstanding` for those ends. Those are
+  duration facts used for earnings per share.
+
+### AMZN
+
+- CIK: 0001018724
+- Source URL: https://data.sec.gov/api/xbrl/companyfacts/CIK0001018724.json
+- Period ends kept: 2024-12-31, 2025-12-31
+- File: `amzn_companyfacts_excerpt.json`
+- Selling and marketing is `MarketingExpense`. The response has no
+  `SellingAndMarketingExpense` and no `SellingGeneralAndAdministrativeExpense`.
+- The response has no `ResearchAndDevelopmentExpense`.
+- `Liabilities` is absent. `LiabilitiesNoncurrent` 10-K facts in the response
+  end in 2011, so those older facts are kept as well. They are not 2024 or 2025
+  balances.
+
+### ORCL
+
+- CIK: 0001341439
+- Source URL: https://data.sec.gov/api/xbrl/companyfacts/CIK0001341439.json
+- Period ends kept: 2025-05-31, 2026-05-31
+- File: `orcl_companyfacts_excerpt.json`
+- Noncurrent notes are `LongTermNotesPayable`. The response has no
+  `LongTermDebtNoncurrent` on these ends.
+- `LongTermDebt` has one 10-K fact in the response, end 2022-05-31, value 0.
+  That fact is kept. `CostOfRevenue` 10-K facts stop in 2011 and are kept.
+  Neither is a 2025 or 2026 amount.
+
+### GOOGL
+
+- CIK: 0001652044
+- Source URL: https://data.sec.gov/api/xbrl/companyfacts/CIK0001652044.json
+- Period ends kept: 2024-12-31, 2025-12-31
+- File: `googl_companyfacts_excerpt.json`
+- `Revenues` for 2024-12-31 is the comparative column in the 10-K filed
+  2026-02-05, accession 0001652044-26-000018, `fy` 2025.
+- `RevenueFromContractWithCustomerExcludingAssessedTax` for 2024-12-31 is the
+  2024 10-K, accession 0001652044-25-000014, `fy` 2024. Same revenue amount.
+  The normalizer keeps that filing.
+
+### PLTR
+
+- CIK: 0001321655
+- Source URL: https://data.sec.gov/api/xbrl/companyfacts/CIK0001321655.json
+- Period ends kept: 2024-12-31, 2025-12-31
+- File: `pltr_companyfacts_excerpt.json`
+- `LongTermDebtNoncurrent` 10-K facts in the response stop at 2021-12-31,
+  including a zero. Those facts are kept. The 2024 and 2025 10-Ks do not
+  repeat the tag.
+- `OperatingLeaseLiabilityNoncurrent` for the two kept ends is a lease
+  liability, not that debt line.

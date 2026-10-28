@@ -1,0 +1,836 @@
+{
+  "cik": 1321655,
+  "entityName": "Palantir Technologies Inc.",
+  "facts": {
+    "us-gaap": {
+      "RevenueFromContractWithCustomerExcludingAssessedTax": {
+        "units": {
+          "USD": [
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 2865507000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 2865507000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2024"
+            },
+            {
+              "start": "2025-01-01",
+              "end": "2025-12-31",
+              "val": 4475446000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2025"
+            }
+          ]
+        },
+        "label": "Revenue from Contract with Customer, Excluding Assessed Tax",
+        "description": "Amount, excluding tax collected from customer, of revenue from satisfaction of performance obligation by transferring promised good or service to customer. Tax collected from customer is tax assessed by governmental authority that is both imposed on and concurrent with specific revenue-producing transaction, including, but not limited to, sales, use, value added and excise."
+      },
+      "CostOfRevenue": {
+        "units": {
+          "USD": [
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 565990000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 565990000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2024"
+            },
+            {
+              "start": "2025-01-01",
+              "end": "2025-12-31",
+              "val": 789177000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2025"
+            }
+          ]
+        },
+        "label": "Cost of Revenue",
+        "description": "The aggregate cost of goods produced and sold and services rendered during the reporting period."
+      },
+      "ResearchAndDevelopmentExpense": {
+        "units": {
+          "USD": [
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 507878000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 507878000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2024"
+            },
+            {
+              "start": "2025-01-01",
+              "end": "2025-12-31",
+              "val": 557677000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2025"
+            }
+          ]
+        },
+        "label": "Research and Development Expense",
+        "description": "The aggregate costs incurred (1) in a planned search or critical investigation aimed at discovery of new knowledge with the hope that such knowledge will be useful in developing a new product or service, a new process or technique, or in bringing about a significant improvement to an existing product or process; or (2) to translate research findings or other knowledge into a plan or design for a new product or process or for a significant improvement to an existing product or process whether intended for sale or the entity's use, during the reporting period charged to research and development projects, including the costs of developing computer software up to the point in time of achieving technological feasibility, and costs allocated in accounting for a business combination to in-process projects deemed to have no alternative future use."
+      },
+      "DepreciationDepletionAndAmortization": {
+        "units": {
+          "USD": [
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 31587000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 31587000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2024"
+            },
+            {
+              "start": "2025-01-01",
+              "end": "2025-12-31",
+              "val": 26145000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2025"
+            }
+          ]
+        },
+        "label": "Depreciation, Depletion and Amortization",
+        "description": "The aggregate expense recognized in the current period that allocates the cost of tangible assets, intangible assets, or depleting assets to periods that benefit from use of the assets."
+      },
+      "Depreciation": {
+        "units": {
+          "USD": [
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 23700000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18",
+              "frame": "CY2024"
+            }
+          ]
+        },
+        "label": "Depreciation",
+        "description": "The amount of expense recognized in the current period that reflects the allocation of the cost of tangible assets over the assets' useful lives. Includes production and non-production related depreciation."
+      },
+      "OperatingIncomeLoss": {
+        "units": {
+          "USD": [
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 310403000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 310403000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2024"
+            },
+            {
+              "start": "2025-01-01",
+              "end": "2025-12-31",
+              "val": 1414015000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2025"
+            }
+          ]
+        },
+        "label": "Operating Income (Loss)",
+        "description": "The net result for the period of deducting operating expenses from operating revenues."
+      },
+      "NetIncomeLoss": {
+        "units": {
+          "USD": [
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 462190000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 462190000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17"
+            },
+            {
+              "start": "2025-01-01",
+              "end": "2025-12-31",
+              "val": 1625033000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17"
+            }
+          ]
+        },
+        "label": "Net Income (Loss) Attributable to Parent",
+        "description": "The portion of profit or loss for the period, net of income taxes, which is attributable to the parent."
+      },
+      "NetCashProvidedByUsedInOperatingActivities": {
+        "units": {
+          "USD": [
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 1153865000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 1153865000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2024"
+            },
+            {
+              "start": "2025-01-01",
+              "end": "2025-12-31",
+              "val": 2134473000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2025"
+            }
+          ]
+        },
+        "label": "Net Cash Provided by (Used in) Operating Activities",
+        "description": "Amount of cash inflow (outflow) from operating activities, including discontinued operations. Operating activity cash flows include transactions, adjustments, and changes in value not defined as investing or financing activities."
+      },
+      "SellingAndMarketingExpense": {
+        "units": {
+          "USD": [
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 887755000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 887755000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2024"
+            },
+            {
+              "start": "2025-01-01",
+              "end": "2025-12-31",
+              "val": 1056859000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2025"
+            }
+          ]
+        },
+        "label": "Selling and Marketing Expense",
+        "description": "The aggregate total amount of expenses directly related to the marketing or selling of products or services."
+      },
+      "GeneralAndAdministrativeExpense": {
+        "units": {
+          "USD": [
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 593481000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 593481000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2024"
+            },
+            {
+              "start": "2025-01-01",
+              "end": "2025-12-31",
+              "val": 657718000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2025"
+            }
+          ]
+        },
+        "label": "General and Administrative Expense",
+        "description": "The aggregate total of expenses of managing and administering the affairs of an entity, including affiliates of the reporting entity, which are not directly or indirectly associated with the manufacture, sale or creation of a product or product line."
+      },
+      "AccountsReceivableNetCurrent": {
+        "units": {
+          "USD": [
+            {
+              "end": "2024-12-31",
+              "val": 575048000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "end": "2024-12-31",
+              "val": 575048000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2024Q4I"
+            },
+            {
+              "end": "2025-12-31",
+              "val": 1042065000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17"
+            }
+          ]
+        },
+        "label": "Accounts Receivable, after Allowance for Credit Loss, Current",
+        "description": "Amount, after allowance for credit loss, of right to consideration from customer for product sold and service rendered in normal course of business, classified as current."
+      },
+      "AssetsCurrent": {
+        "units": {
+          "USD": [
+            {
+              "end": "2024-12-31",
+              "val": 5934289000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "end": "2024-12-31",
+              "val": 5934289000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2024Q4I"
+            },
+            {
+              "end": "2025-12-31",
+              "val": 8358174000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17"
+            }
+          ]
+        },
+        "label": "Assets, Current",
+        "description": "Sum of the carrying amounts as of the balance sheet date of all assets that are expected to be realized in cash, sold, or consumed within one year (or the normal operating cycle, if longer). Assets are probable future economic benefits obtained or controlled by an entity as a result of past transactions or events."
+      },
+      "PropertyPlantAndEquipmentNet": {
+        "units": {
+          "USD": [
+            {
+              "end": "2024-12-31",
+              "val": 39638000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "end": "2024-12-31",
+              "val": 39638000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2024Q4I"
+            },
+            {
+              "end": "2025-12-31",
+              "val": 51960000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17"
+            }
+          ]
+        },
+        "label": "Property, Plant and Equipment, Net",
+        "description": "Amount after accumulated depreciation, depletion and amortization of physical assets used in the normal conduct of business to produce goods and services and not intended for resale. Examples include, but are not limited to, land, buildings, machinery and equipment, office equipment, and furniture and fixtures."
+      },
+      "Assets": {
+        "units": {
+          "USD": [
+            {
+              "end": "2024-12-31",
+              "val": 6340884000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "end": "2024-12-31",
+              "val": 6340884000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2024Q4I"
+            },
+            {
+              "end": "2025-12-31",
+              "val": 8900392000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17"
+            }
+          ]
+        },
+        "label": "Assets",
+        "description": "Sum of the carrying amounts as of the balance sheet date of all assets that are recognized. Assets are probable future economic benefits obtained or controlled by an entity as a result of past transactions or events."
+      },
+      "LiabilitiesCurrent": {
+        "units": {
+          "USD": [
+            {
+              "end": "2024-12-31",
+              "val": 996018000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "end": "2024-12-31",
+              "val": 996018000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2024Q4I"
+            },
+            {
+              "end": "2025-12-31",
+              "val": 1175581000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17"
+            }
+          ]
+        },
+        "label": "Liabilities, Current",
+        "description": "Total obligations incurred as part of normal operations that are expected to be paid during the following twelve months or within one business cycle, if longer."
+      },
+      "Liabilities": {
+        "units": {
+          "USD": [
+            {
+              "end": "2024-12-31",
+              "val": 1246477000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "end": "2024-12-31",
+              "val": 1246477000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2024Q4I"
+            },
+            {
+              "end": "2025-12-31",
+              "val": 1412381000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17"
+            }
+          ]
+        },
+        "label": "Liabilities",
+        "description": "Sum of the carrying amounts as of the balance sheet date of all liabilities that are recognized. Liabilities are probable future sacrifices of economic benefits arising from present obligations of an entity to transfer assets or provide services to other entities in the future."
+      },
+      "LongTermDebtNoncurrent": {
+        "units": {
+          "USD": [
+            {
+              "end": "2019-12-31",
+              "val": 396065000,
+              "accn": "0001193125-21-060650",
+              "fy": 2020,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2021-02-26",
+              "frame": "CY2019Q4I"
+            },
+            {
+              "end": "2020-12-31",
+              "val": 197977000,
+              "accn": "0001193125-21-060650",
+              "fy": 2020,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2021-02-26"
+            },
+            {
+              "end": "2020-12-31",
+              "val": 197977000,
+              "accn": "0001193125-22-050913",
+              "fy": 2021,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2022-02-24",
+              "frame": "CY2020Q4I"
+            },
+            {
+              "end": "2021-12-31",
+              "val": 0,
+              "accn": "0001193125-22-050913",
+              "fy": 2021,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2022-02-24",
+              "frame": "CY2021Q4I"
+            }
+          ]
+        },
+        "label": "Long-term Debt, Excluding Current Maturities",
+        "description": "Amount after unamortized (discount) premium and debt issuance costs of long-term debt classified as noncurrent and excluding amounts to be repaid within one year or the normal operating cycle, if longer. Includes, but not limited to, notes payable, bonds payable, debentures, mortgage loans and commercial paper. Excludes capital lease obligations."
+      },
+      "RetainedEarningsAccumulatedDeficit": {
+        "units": {
+          "USD": [
+            {
+              "end": "2024-12-31",
+              "val": -5187423000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "end": "2024-12-31",
+              "val": -5187423000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2024Q4I"
+            },
+            {
+              "end": "2025-12-31",
+              "val": -3562390000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17"
+            }
+          ]
+        },
+        "label": "Retained Earnings (Accumulated Deficit)",
+        "description": "The cumulative amount of the reporting entity's undistributed earnings or deficit."
+      },
+      "CommonStockSharesOutstanding": {
+        "units": {
+          "shares": [
+            {
+              "end": "2024-12-31",
+              "val": 2338795000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "end": "2024-12-31",
+              "val": 2338795000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2024Q4I"
+            },
+            {
+              "end": "2025-12-31",
+              "val": 2391192000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17"
+            }
+          ]
+        },
+        "label": "Common Stock, Shares, Outstanding",
+        "description": "Number of shares of common stock outstanding. Common stock represent the ownership interest in a corporation."
+      },
+      "WeightedAverageNumberOfSharesOutstandingBasic": {
+        "units": {
+          "shares": [
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 2250163000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 2250163000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2024"
+            },
+            {
+              "start": "2025-01-01",
+              "end": "2025-12-31",
+              "val": 2369612000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2025"
+            }
+          ]
+        },
+        "label": "Weighted Average Number of Shares Outstanding, Basic",
+        "description": "Number of [basic] shares or units, after adjustment for contingently issuable shares or units and other shares or units not deemed outstanding, determined by relating the portion of time within a reporting period that common shares or units have been outstanding to the total time in that period."
+      },
+      "WeightedAverageNumberOfDilutedSharesOutstanding": {
+        "units": {
+          "shares": [
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 2450818000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "start": "2024-01-01",
+              "end": "2024-12-31",
+              "val": 2450818000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2024"
+            },
+            {
+              "start": "2025-01-01",
+              "end": "2025-12-31",
+              "val": 2565197000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2025"
+            }
+          ]
+        },
+        "label": "Weighted Average Number of Shares Outstanding, Diluted",
+        "description": "The average number of shares or units issued and outstanding that are used in calculating diluted EPS or earnings per unit (EPU), determined based on the timing of issuance of shares or units in the period."
+      },
+      "OperatingLeaseLiabilityNoncurrent": {
+        "units": {
+          "USD": [
+            {
+              "end": "2024-12-31",
+              "val": 195226000,
+              "accn": "0001321655-25-000022",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-18"
+            },
+            {
+              "end": "2024-12-31",
+              "val": 195226000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17",
+              "frame": "CY2024Q4I"
+            },
+            {
+              "end": "2025-12-31",
+              "val": 183474000,
+              "accn": "0001321655-26-000011",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-17"
+            }
+          ]
+        },
+        "label": "Operating Lease, Liability, Noncurrent",
+        "description": "Present value of lessee's discounted obligation for lease payments from operating lease, classified as noncurrent."
+      }
+    }
+  }
+}

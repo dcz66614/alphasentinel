@@ -126,6 +126,70 @@ def test_offline_cli_prints_row_and_metric_counts(tmp_path: Path) -> None:
     assert (reports / "AlphaSentinel_Executive_Briefing.docx").is_file()
 
 
+def test_one_ticker_failure_still_writes_the_briefing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from alphasentinel.db_schema import init_db
+    from alphasentinel.ingestor import IngestBatch
+
+    module = _load()
+    database = tmp_path / "warehouse.duckdb"
+    init_db(database)
+
+    def fake_ingest(_tickers, **_kwargs):
+        return IngestBatch(
+            2,
+            (("META", "incomplete 10-K periods (2025-12-31: shares_outstanding)"),),
+        )
+
+    def fake_score(_db):
+        return [{"ticker": "AAPL"}]
+
+    def fake_compile(_db, directory: Path):
+        directory.mkdir(parents=True, exist_ok=True)
+        markdown = directory / "brief.md"
+        document = directory / "brief.docx"
+        markdown.write_text("briefing\n" + ("x" * 200), encoding="utf-8")
+        with zipfile.ZipFile(document, "w") as archive:
+            archive.writestr("word/document.xml", "y" * 200)
+        return {"md": markdown, "docx": document}
+
+    def fake_build_loader():
+        def build(dest: Path) -> int:
+            dest.mkdir(parents=True, exist_ok=True)
+            for name in DELIVERABLE_NAMES:
+                (dest / name).write_text("z" * 120, encoding="utf-8")
+            return 0
+
+        return build
+
+    monkeypatch.setattr(module, "ingest_tickers", fake_ingest)
+    monkeypatch.setattr(module, "run_forensic_pipeline", fake_score)
+    monkeypatch.setattr(module, "compile_report", fake_compile)
+    monkeypatch.setattr(module, "_load_build_and_verify", fake_build_loader)
+
+    code = module.run_pipeline(
+        ["AAPL", "META"],
+        offline=True,
+        db_path=database,
+        cache_dir=tmp_path / "cache",
+        reports_dir=tmp_path / "reports",
+        deliverables_dir=tmp_path / "deliverables",
+    )
+    captured = capsys.readouterr()
+
+    assert code == 1
+    assert (
+        "[PIPELINE] ticker_fail META incomplete 10-K periods "
+        "(2025-12-31: shares_outstanding)"
+    ) in captured.err
+    assert "failed_tickers=META" in captured.out
+    assert "[PIPELINE] ingested_records=2" in captured.out
+    briefing = tmp_path / "reports" / "AlphaSentinel_Executive_Briefing.md"
+    assert briefing.is_file()
+    assert briefing.stat().st_size >= 100
+
+
 def test_offline_missing_cache_fails(tmp_path: Path) -> None:
     result = subprocess.run(
         [

@@ -280,7 +280,8 @@ def test_pipeline_on_offline_sec_cache(tmp_path: Path) -> None:
     written = ingest_tickers(
         ["AAPL", "MSFT"], db_path=database, cache_dir=FIXTURE_CACHE, offline=True
     )
-    assert written == 4
+    assert written.written == 4
+    assert written.failures == ()
     results = run_forensic_pipeline(database)
     assert [row["ticker"] for row in results] == ["AAPL", "MSFT"]
 

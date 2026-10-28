@@ -11,7 +11,8 @@ The year's own 10-K is the fact whose `fy` equals that end year. Later filings
 that repeat the same end are comparative columns and are not substituted.
 
 No financial amount is filled in, carried forward, or scaled. A missing XBRL
-concept, price, or insider trade raises IngestError.
+concept, price, or insider trade raises IngestError for that ticker. The
+batch records the reason and continues with the other tickers.
 """
 
 from __future__ import annotations
@@ -24,6 +25,7 @@ import os
 import re
 import sys
 import xml.etree.ElementTree as ET
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from html import unescape
 from pathlib import Path
@@ -88,14 +90,19 @@ INSTANT_CONCEPTS: dict[str, tuple[str, ...]] = {
     "long_term_debt": (
         "LongTermDebtNoncurrent",
         "LongTermDebt",
+        # Notes Payable, Noncurrent. Oracle files this instead of LongTermDebtNoncurrent.
+        "LongTermNotesPayable",
     ),
     "total_liabilities": ("Liabilities",),
     "retained_earnings": ("RetainedEarningsAccumulatedDeficit",),
+    # Period-end shares. Weighted-average shares are an EPS flow, not this balance.
     "shares_outstanding": ("CommonStockSharesOutstanding",),
 }
 
 SGA_AGGREGATE = "SellingGeneralAndAdministrativeExpense"
-SGA_SELLING = "SellingAndMarketingExpense"
+# Combined selling line first. MarketingExpense is that line when the filer
+# does not report SellingAndMarketingExpense. The two are not added together.
+SGA_SELLING = ("SellingAndMarketingExpense", "MarketingExpense")
 SGA_ADMIN = "GeneralAndAdministrativeExpense"
 LIABILITIES_CURRENT = "LiabilitiesCurrent"
 LIABILITIES_NONCURRENT = "LiabilitiesNoncurrent"
@@ -125,6 +132,18 @@ class IngestError(RuntimeError):
 
 class CacheMissError(IngestError):
     """Offline mode was asked to read a download that is not in the cache."""
+
+
+@dataclass(frozen=True)
+class IngestBatch:
+    """Rows written, plus tickers that could not be normalized.
+
+    ``failures`` holds ``(ticker, reason)``. The reason is the IngestError
+    text. Nothing from a failed ticker is inserted as zero.
+    """
+
+    written: int
+    failures: tuple[tuple[str, str], ...]
 
 
 def sec_identity() -> str:
@@ -235,6 +254,14 @@ def _concept_rows(payload: dict[str, Any], name: str, unit: str) -> list[dict[st
     return rows if isinstance(rows, list) else []
 
 
+def _period_candidates(
+    rows: list[dict[str, Any]], period_end: str, *, flow: bool
+) -> list[dict[str, Any]]:
+    if flow:
+        return [fact for fact in rows if fact.get("end") == period_end and _is_annual_flow(fact)]
+    return [fact for fact in rows if fact.get("end") == period_end and _is_instant(fact)]
+
+
 def _pick_value(
     payload: dict[str, Any],
     names: tuple[str, ...],
@@ -244,23 +271,30 @@ def _pick_value(
     unit: str,
     accession: str | None,
 ) -> tuple[float, dict[str, Any]] | None:
+    """Read the first tag that has this period on the year's own 10-K.
+
+    A later alias is used when an earlier tag only repeats the period as a
+    comparative column (``fy`` is not the period-end year). A comparative
+    value is used only when no alias has an own-year fact.
+    """
+    end_year = int(period_end[:4])
+    fallback: tuple[float, dict[str, Any]] | None = None
     for name in names:
         rows = _concept_rows(payload, name, unit)
-        if flow:
-            candidates = [
-                fact for fact in rows if fact.get("end") == period_end and _is_annual_flow(fact)
-            ]
-        else:
-            candidates = [
-                fact for fact in rows if fact.get("end") == period_end and _is_instant(fact)
-            ]
+        candidates = _period_candidates(rows, period_end, flow=flow)
         if not candidates:
             continue
-        fact = _choose_fact(candidates, period_end, accession)
+        own_year = [fact for fact in candidates if fact.get("fy") == end_year]
+        pool = own_year or candidates
+        fact = _choose_fact(pool, period_end, accession)
         if "val" not in fact:
             continue
-        return float(fact["val"]), fact
-    return None
+        chosen = (float(fact["val"]), fact)
+        if own_year:
+            return chosen
+        if fallback is None:
+            fallback = chosen
+    return fallback
 
 
 def _annual_period_ends(payload: dict[str, Any]) -> list[str]:
@@ -286,7 +320,7 @@ def _resolve_sga(
     if direct is not None:
         return direct[0]
     selling = _pick_value(
-        payload, (SGA_SELLING,), period_end, flow=True, unit="USD", accession=accession
+        payload, SGA_SELLING, period_end, flow=True, unit="USD", accession=accession
     )
     admin = _pick_value(
         payload, (SGA_ADMIN,), period_end, flow=True, unit="USD", accession=accession
@@ -919,22 +953,32 @@ def ingest_tickers(
     db_path: Path | None = None,
     cache_dir: Path | None = None,
     offline: bool = False,
-) -> int:
-    """Load 10-K rows into DuckDB. Offline never calls the network."""
+) -> IngestBatch:
+    """Load 10-K rows into DuckDB. Offline never calls the network.
+
+    A ticker with a missing concept, price, or Form 4 trade is recorded and
+    skipped. Other tickers are still written. An offline cache miss still
+    raises CacheMissError. No missing amount is stored as zero.
+    """
     symbols = parse_tickers(tickers)
     cache = Path(cache_dir) if cache_dir is not None else DEFAULT_CACHE_DIR
     database = Path(db_path) if db_path is not None else DEFAULT_DUCKDB_PATH
-    if offline:
-        for symbol in symbols:
-            require_cache(cache, symbol)
-    else:
-        for symbol in symbols:
-            download_ticker(cache, symbol)
     written = 0
+    failures: list[tuple[str, str]] = []
     for symbol in symbols:
-        rows = _rows_from_cache(cache, symbol, offline=offline)
-        written += _insert_rows(database, rows)
-    return written
+        try:
+            if offline:
+                require_cache(cache, symbol)
+            else:
+                download_ticker(cache, symbol)
+            rows = _rows_from_cache(cache, symbol, offline=offline)
+            written += _insert_rows(database, rows)
+        except CacheMissError:
+            raise
+        except IngestError as exc:
+            failures.append((symbol, str(exc)))
+            print(f"[INGESTOR] {symbol} failed: {exc}", file=sys.stderr)
+    return IngestBatch(written, tuple(failures))
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -947,11 +991,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
     try:
-        count = ingest_tickers(args.tickers, offline=args.offline)
+        batch = ingest_tickers(args.tickers, offline=args.offline)
     except IngestError as exc:
         print(f"[INGESTOR] {exc}", file=sys.stderr)
         return 1
-    print(f"[INGESTOR] Successfully ingested {count} company-year financial records into DuckDB.")
+    print(
+        "[INGESTOR] Successfully ingested "
+        f"{batch.written} company-year financial records into DuckDB."
+    )
+    if batch.failures:
+        return 1
     return 0
 
 
