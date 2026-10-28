@@ -62,3 +62,34 @@ def get_scores(ticker: str) -> list[dict[str, object]]:
     if not rows:
         raise HTTPException(status_code=404, detail="Ticker not found")
     return rows
+
+
+@app.get("/api/v1/scores")
+def list_all_scores() -> dict[str, object]:
+    """All stored forensic rows. NULL scores stay NULL and sort after numbers."""
+    rows = _rows("SELECT * FROM forensic_scores ORDER BY ai_washing_score DESC")
+    return {"count": len(rows), "items": rows}
+
+
+@app.get("/api/v1/ticker/{symbol}")
+def get_ticker_detail(symbol: str) -> dict[str, object]:
+    """Latest stored score plus the financial history for one ticker."""
+    ticker = symbol.strip().upper()
+    scores = _rows(
+        "SELECT * FROM forensic_scores WHERE ticker = ? ORDER BY fiscal_year",
+        (ticker,),
+    )
+    if not scores:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Ticker {ticker} not found in warehouse.",
+        )
+    financials = _rows(
+        "SELECT * FROM company_financials WHERE ticker = ? ORDER BY fiscal_year",
+        (ticker,),
+    )
+    return {
+        "ticker": ticker,
+        "forensic_summary": scores[-1],
+        "financial_history": financials,
+    }

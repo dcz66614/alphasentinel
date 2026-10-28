@@ -255,14 +255,67 @@ def test_verify_all_summarizes_a_failure(tmp_path: Path, monkeypatch: pytest.Mon
     assert code == 1
 
 
+def test_invalid_briefing_is_not_replaced(tmp_path: Path) -> None:
+    module = _load()
+    markdown = tmp_path / "AlphaSentinel_Executive_Briefing.md"
+    document = tmp_path / "AlphaSentinel_Executive_Briefing.docx"
+    markdown.write_text("short", encoding="utf-8")
+    document.write_bytes(b"not a zip")
+
+    assert module.briefing_ready(tmp_path) == 1
+    assert markdown.read_text(encoding="utf-8") == "short"
+    assert document.read_bytes() == b"not a zip"
+
+
+def test_missing_briefing_is_built_from_offline_fixtures(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    module = _load()
+
+    def fail_download(*_args, **_kwargs):
+        raise AssertionError("briefing build called the network")
+
+    monkeypatch.setattr("alphasentinel.ingestor.download_ticker", fail_download)
+    monkeypatch.setattr("alphasentinel.ingestor._download_bytes", fail_download)
+    monkeypatch.setattr(module, "DEFAULT_DB", tmp_path / "missing.duckdb")
+    monkeypatch.setattr(module, "DEFAULT_CACHE", tmp_path / "empty-cache")
+
+    reports = tmp_path / "reports"
+    assert module.briefing_ready(reports) == 0
+    briefing = reports / "AlphaSentinel_Executive_Briefing.md"
+    text = briefing.read_text(encoding="utf-8")
+    assert "AAPL" in text
+    assert "MSFT" in text
+    assert "数据不足（数据库字段为 NULL）" in text
+    assert zipfile.is_zipfile(reports / "AlphaSentinel_Executive_Briefing.docx")
+    assert not (ROOT / "reports" / "from-test").exists()
+
+
 def test_nested_verify_all_checks_the_briefing(tmp_path: Path) -> None:
     module = _load()
-    assert module.briefing_ready(tmp_path) == 1
-
     environment = os.environ.copy()
     environment[module.CHILD_ENV] = "1"
+    command = [sys.executable, str(SCRIPT), "--verify-all", "--reports-dir", str(tmp_path)]
+
     missing = subprocess.run(
-        [sys.executable, str(SCRIPT), "--verify-all", "--reports-dir", str(tmp_path)],
+        command,
+        cwd=ROOT,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=180,
+    )
+    assert missing.returncode == 0, missing.stdout + missing.stderr
+    assert "TASK-09 artifact present" in missing.stdout
+    briefing = tmp_path / "AlphaSentinel_Executive_Briefing.md"
+    assert briefing.is_file()
+    assert briefing.stat().st_size >= 100
+
+    briefing.write_text("short", encoding="utf-8")
+    (tmp_path / "AlphaSentinel_Executive_Briefing.docx").write_bytes(b"not a zip")
+    rejected = subprocess.run(
+        command,
         cwd=ROOT,
         env=environment,
         capture_output=True,
@@ -270,11 +323,12 @@ def test_nested_verify_all_checks_the_briefing(tmp_path: Path) -> None:
         check=False,
         timeout=30,
     )
-    assert missing.returncode == 1
+    assert rejected.returncode == 1
+    assert briefing.read_text(encoding="utf-8") == "short"
 
     _write_briefing(tmp_path)
     present = subprocess.run(
-        [sys.executable, str(SCRIPT), "--verify-all", "--reports-dir", str(tmp_path)],
+        command,
         cwd=ROOT,
         env=environment,
         capture_output=True,

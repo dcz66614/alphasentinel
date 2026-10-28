@@ -49,12 +49,41 @@ def _score_chart(scores: pd.DataFrame) -> None:
         st.info(_NO_DATA)
 
 
+def portfolio_kpis(scores: pd.DataFrame) -> list[tuple[str, int]]:
+    """Four portfolio counts from stored score rows.
+
+    A NULL ``ai_washing_score`` or ``beneish_m_score`` does not count as an
+    alert. The counts are row counts, not filled-in financial amounts.
+    """
+    if scores.empty:
+        return []
+    verified = int(scores["ai_washing_status"].eq("VERIFIED_AI_ROI").fillna(False).sum())
+    alerts = int(scores["ai_washing_score"].ge(35.0).fillna(False).sum())
+    high_risk = int(scores["beneish_m_score"].gt(-1.78).fillna(False).sum())
+    return [
+        ("Monitored Equities", len(scores)),
+        ("Verified AI-ROI Leaders", verified),
+        ("AI-Washing / Watch Alerts", alerts),
+        ("High Manipulation Risk (M > -1.78)", high_risk),
+    ]
+
+
+def _render_portfolio_kpis(scores: pd.DataFrame) -> None:
+    kpis = portfolio_kpis(scores)
+    if not kpis:
+        return
+    columns = st.columns(4, border=True)
+    for column, (label, value) in zip(columns, kpis, strict=True):
+        column.metric(label, str(value), height="stretch")
+
+
 def main() -> None:
     st.set_page_config(page_title="AlphaSentinel 看板", layout="wide")
     st.title("AlphaSentinel 财务与四项评分看板")
     st.caption("所有数值均直接来自 DuckDB；NULL 显示为“数据不足”。")
 
     financials, scores = _load_data()
+    _render_portfolio_kpis(scores)
     tickers = sorted(set(financials["ticker"]) | set(scores["ticker"]))
     if not tickers:
         st.warning("无数据")
