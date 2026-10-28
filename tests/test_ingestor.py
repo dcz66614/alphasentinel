@@ -188,9 +188,11 @@ def _revenue_fact(payload: dict, period_end: str) -> dict:
 
 
 def test_meta_shares_outstanding_is_not_the_weighted_average() -> None:
-    """META files no CommonStockSharesOutstanding. The EPS average is not a substitute."""
+    """META files no period-end share count. The EPS average is not a substitute."""
     payload = _load(META_FIXTURE)
     assert "CommonStockSharesOutstanding" not in payload["facts"]["us-gaap"]
+    assert "EntityCommonStockSharesOutstanding" not in payload["facts"].get("dei", {})
+    assert "EntityPublicFloat" in payload["facts"]["dei"]
     period_end = "2025-12-31"
     basic = _own_year_fact(
         _unit_rows(payload, "WeightedAverageNumberOfSharesOutstandingBasic", "shares"),
@@ -198,11 +200,15 @@ def test_meta_shares_outstanding_is_not_the_weighted_average() -> None:
     )
     assert basic.get("start")
     assert basic["val"] > 0
-    with pytest.raises(IngestError, match="shares_outstanding") as raised:
-        normalize_company_facts(payload)
-    assert "2025-12-31" in str(raised.value)
-    assert "2024-12-31" in str(raised.value)
-    assert str(int(basic["val"])) not in str(raised.value)
+    rows = {row["fiscal_year"]: row for row in normalize_company_facts(payload)}
+    assert set(rows) == {2024, 2025}
+    for row in rows.values():
+        assert row["shares_outstanding"] is None
+        assert row["shares_outstanding"] != basic["val"]
+        assert "shares_outstanding" not in row["derived_fields"]
+        assert row["revenue"] > 0
+        assert row["total_liabilities"] > 0
+        assert "total_liabilities" not in row["derived_fields"]
 
 
 def test_amzn_sga_uses_marketing_expense() -> None:
@@ -213,11 +219,9 @@ def test_amzn_sga_uses_marketing_expense() -> None:
     assert "SellingAndMarketingExpense" not in concepts
     assert "SellingGeneralAndAdministrativeExpense" not in concepts
     assert "ResearchAndDevelopmentExpense" not in concepts
-    with pytest.raises(IngestError, match="rd_expense") as raised:
-        normalize_company_facts(payload)
-    message = str(raised.value)
-    assert "sga" not in message
-    assert "total_liabilities" in message
+    assert "Liabilities" not in concepts
+    rows = {row["fiscal_year"]: row for row in normalize_company_facts(payload)}
+    assert set(rows) == {2024, 2025}
     for period_end in ("2025-12-31", "2024-12-31"):
         revenue = _revenue_fact(payload, period_end)
         accession = revenue["accn"]
@@ -232,6 +236,36 @@ def test_amzn_sga_uses_marketing_expense() -> None:
         )
         assert sga == marketing["val"] + admin["val"]
         assert sga > 0
+        row = rows[int(period_end[:4])]
+        assets = _own_year_fact(_unit_rows(payload, "Assets", "USD"), period_end, accession)
+        equity = _own_year_fact(
+            _unit_rows(payload, "StockholdersEquity", "USD"), period_end, accession
+        )
+        liabilities_and_equity = _own_year_fact(
+            _unit_rows(payload, "LiabilitiesAndStockholdersEquity", "USD"),
+            period_end,
+            accession,
+        )
+        assert liabilities_and_equity["val"] == assets["val"]
+        assert row["total_liabilities"] == assets["val"] - equity["val"]
+        assert row["derived_fields"] == ("total_liabilities",)
+        assert row["rd_expense"] is None
+        shares = _own_year_fact(
+            _unit_rows(payload, "CommonStockSharesOutstanding", "shares"),
+            period_end,
+            accession,
+        )
+        cover = [
+            fact
+            for fact in payload["facts"]["dei"]["EntityCommonStockSharesOutstanding"]["units"][
+                "shares"
+            ]
+            if fact.get("fy") == int(period_end[:4]) and fact.get("form") == "10-K"
+        ]
+        assert len(cover) == 1
+        assert cover[0]["end"] != period_end
+        assert cover[0]["val"] != shares["val"]
+        assert row["shares_outstanding"] == shares["val"]
 
 
 def test_orcl_long_term_debt_uses_notes_payable() -> None:
@@ -242,12 +276,9 @@ def test_orcl_long_term_debt_uses_notes_payable() -> None:
     assert "LongTermNotesPayable" in concepts
     old_debt = _unit_rows(payload, "LongTermDebt", "USD")
     assert any(fact.get("end") == "2022-05-31" and fact.get("val") == 0 for fact in old_debt)
-    with pytest.raises(IngestError, match="cogs") as raised:
-        normalize_company_facts(payload)
-    message = str(raised.value)
-    assert "long_term_debt" not in message
-    assert "2026-05-31" in message
-    assert "2025-05-31" in message
+    assert "CostOfGoodsAndServicesSold" not in concepts
+    rows = {row["fiscal_year"]: row for row in normalize_company_facts(payload)}
+    assert set(rows) == {2025, 2026}
     for period_end in ("2026-05-31", "2025-05-31"):
         revenue = _revenue_fact(payload, period_end)
         accession = revenue["accn"]
@@ -265,6 +296,21 @@ def test_orcl_long_term_debt_uses_notes_payable() -> None:
         assert picked is not None
         assert picked[0] == notes["val"]
         assert picked[0] > 0
+        row = rows[int(period_end[:4])]
+        assert row["long_term_debt"] == notes["val"]
+        assert row["cogs"] is None
+        assert "cogs" not in row["derived_fields"]
+        costs = _own_year_fact(
+            _unit_rows(payload, "CostsAndExpenses", "USD"), period_end, accession
+        )
+        assert costs["val"] > 0
+        assert row["cogs"] != costs["val"]
+        old_cost = [
+            fact
+            for fact in _unit_rows(payload, "CostOfRevenue", "USD")
+            if fact.get("end") == period_end
+        ]
+        assert old_cost == []
 
 
 def test_googl_prior_year_uses_the_own_10k_tag() -> None:
@@ -302,11 +348,15 @@ def test_pltr_omitted_long_term_debt_is_not_filled_with_zero() -> None:
         "2025-12-31",
     )
     assert lease["val"] > 0
-    with pytest.raises(IngestError, match="long_term_debt") as raised:
-        normalize_company_facts(payload)
-    message = str(raised.value)
-    assert "2025-12-31" in message
-    assert "2024-12-31" in message
+    rows = {row["fiscal_year"]: row for row in normalize_company_facts(payload)}
+    assert set(rows) == {2024, 2025}
+    for row in rows.values():
+        assert row["long_term_debt"] is None
+        assert row["long_term_debt"] != 0
+        assert row["long_term_debt"] != lease["val"]
+        assert "long_term_debt" not in row["derived_fields"]
+        assert row["revenue"] > 0
+        assert row["total_liabilities"] > 0
 
 
 def test_incomplete_ticker_is_skipped_and_not_zero_filled(

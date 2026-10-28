@@ -841,6 +841,36 @@
         "label": "Operating Lease, Liability, Noncurrent",
         "description": "Present value of lessee's discounted obligation for lease payments from operating lease, classified as noncurrent."
       }
+    },
+    "dei": {
+      "EntityPublicFloat": {
+        "units": {
+          "USD": [
+            {
+              "end": "2024-06-30",
+              "val": 1103000000000,
+              "accn": "0001326801-25-000017",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-01-30",
+              "frame": "CY2024Q2I"
+            },
+            {
+              "end": "2025-06-30",
+              "val": 1600000000000,
+              "accn": "0001628280-26-003942",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-01-29",
+              "frame": "CY2025Q2I"
+            }
+          ]
+        },
+        "label": "Entity Public Float",
+        "description": "The aggregate market value of the voting and non-voting common equity held by non-affiliates computed by reference to the price at which the common equity was last sold, or the average bid and asked price of such common equity, as of the last business day of the registrant's most recently completed second fiscal quarter."
+      }
     }
   }
 }

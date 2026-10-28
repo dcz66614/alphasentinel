@@ -169,8 +169,23 @@ def test_default_database_path() -> None:
     assert DEFAULT_DUCKDB_PATH.parent.name == "data"
 
 
+# Unreported 10-K lines, and market cap when period-end shares are absent.
+NULLABLE_FINANCIAL = frozenset(
+    {
+        "cogs",
+        "rd_expense",
+        "long_term_debt",
+        "total_liabilities",
+        "shares_outstanding",
+        "market_cap",
+    }
+)
+
+
 def _expected_nullable(table: str, name: str) -> str:
     if table == "forensic_scores" and name in NULLABLE_FORENSIC:
+        return "YES"
+    if table == "company_financials" and name in NULLABLE_FINANCIAL:
         return "YES"
     return "NO"
 
@@ -280,6 +295,60 @@ def test_init_db_relaxes_legacy_forensic_not_null(tmp_path: Path) -> None:
             "SELECT altman_z_score, beneish_m_score, piotroski_f_score FROM forensic_scores"
         ).fetchone()
         assert stored == (None, None, None)
+    finally:
+        conn.close()
+
+
+def test_init_db_relaxes_legacy_financial_not_null(tmp_path: Path) -> None:
+    """A TASK-02 warehouse marked every financial amount NOT NULL."""
+    db_path = tmp_path / "legacy.duckdb"
+    column_sql = ",\n".join(
+        f"    {name} {data_type} NOT NULL" for name, data_type in COMPANY_FINANCIALS
+    )
+    conn = duckdb.connect(str(db_path))
+    conn.execute(
+        "CREATE TABLE company_financials (\n"
+        f"{column_sql},\n"
+        "    PRIMARY KEY (ticker, fiscal_year)\n"
+        ")"
+    )
+    conn.close()
+
+    init_db(db_path)
+    conn = get_duckdb_conn(db_path)
+    try:
+        nullable = {name: flag for name, _, flag in _column_rows(conn, "company_financials")}
+        for name in NULLABLE_FINANCIAL:
+            assert nullable[name] == "YES"
+        assert nullable["revenue"] == "NO"
+        assert nullable["ticker"] == "NO"
+        conn.execute(
+            """
+            INSERT INTO company_financials (
+                ticker, company_name, sector, fiscal_year, filing_form, filing_date,
+                data_source_mode, revenue, cogs, sga, rd_expense, depreciation,
+                ebit, net_income, operating_cash_flow, receivables, current_assets,
+                ppe, total_assets, current_liabilities, long_term_debt, total_liabilities,
+                retained_earnings, working_capital, shares_outstanding, market_cap,
+                ai_mention_count, total_word_count, insider_net_sell_ratio
+            ) VALUES (
+                'TEST', 'TEST', 'TEST', 2025, '10-K', '2026-01-01',
+                'TEST', 1, NULL, 1, NULL, 1,
+                1, 1, 1, 1, 1,
+                1, 1, 1, NULL, NULL,
+                1, 1, NULL, NULL,
+                0, 1, 0
+            )
+            """
+        )
+        stored = conn.execute(
+            """
+            SELECT cogs, rd_expense, long_term_debt, total_liabilities,
+                   shares_outstanding, market_cap
+            FROM company_financials
+            """
+        ).fetchone()
+        assert stored == (None, None, None, None, None, None)
     finally:
         conn.close()
 

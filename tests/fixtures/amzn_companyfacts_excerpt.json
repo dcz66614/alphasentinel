@@ -855,6 +855,107 @@
         },
         "label": "Operating Lease, Liability, Noncurrent",
         "description": "Present value of lessee's discounted obligation for lease payments from operating lease, classified as noncurrent."
+      },
+      "StockholdersEquity": {
+        "units": {
+          "USD": [
+            {
+              "end": "2024-12-31",
+              "val": 285970000000,
+              "accn": "0001018724-25-000004",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-07"
+            },
+            {
+              "end": "2024-12-31",
+              "val": 285970000000,
+              "accn": "0001018724-26-000004",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-06"
+            },
+            {
+              "end": "2025-12-31",
+              "val": 411065000000,
+              "accn": "0001018724-26-000004",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-06"
+            }
+          ]
+        },
+        "label": "Stockholders' Equity Attributable to Parent",
+        "description": "Total of all stockholders' equity (deficit) items, net of receivables from officers, directors, owners, and affiliates of the entity which are attributable to the parent. The amount of the economic entity's stockholders' equity attributable to the parent excludes the amount of stockholders' equity which is allocable to that ownership interest in subsidiary equity which is not attributable to the parent (noncontrolling interest, minority interest). This excludes temporary equity and is sometimes called permanent equity."
+      },
+      "LiabilitiesAndStockholdersEquity": {
+        "units": {
+          "USD": [
+            {
+              "end": "2024-12-31",
+              "val": 624894000000,
+              "accn": "0001018724-25-000004",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-07"
+            },
+            {
+              "end": "2024-12-31",
+              "val": 624894000000,
+              "accn": "0001018724-26-000004",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-06",
+              "frame": "CY2024Q4I"
+            },
+            {
+              "end": "2025-12-31",
+              "val": 818042000000,
+              "accn": "0001018724-26-000004",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-06"
+            }
+          ]
+        },
+        "label": "Liabilities and Equity",
+        "description": "Amount of liabilities and equity items, including the portion of equity attributable to noncontrolling interests, if any."
+      }
+    },
+    "dei": {
+      "EntityCommonStockSharesOutstanding": {
+        "units": {
+          "shares": [
+            {
+              "end": "2025-01-29",
+              "val": 10597729352,
+              "accn": "0001018724-25-000004",
+              "fy": 2024,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-02-07",
+              "frame": "CY2024Q4I"
+            },
+            {
+              "end": "2026-01-28",
+              "val": 10734920870,
+              "accn": "0001018724-26-000004",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-02-06",
+              "frame": "CY2025Q4I"
+            }
+          ]
+        },
+        "label": "Entity Common Stock, Shares Outstanding",
+        "description": "Indicate number of shares or other units outstanding of each of registrant's classes of capital or common stock or other ownership interests, if and as stated on cover of related periodic report. Where multiple classes or units exist define each class/interest by adding class of stock items such as Common Class A [Member], Common Class B [Member] or Partnership Interest [Member] onto the Instrument [Domain] of the Entity Listings, Instrument."
       }
     }
   }

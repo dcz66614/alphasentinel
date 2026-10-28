@@ -881,6 +881,46 @@
         },
         "label": "Operating Lease, Liability, Noncurrent",
         "description": "Present value of lessee's discounted obligation for lease payments from operating lease, classified as noncurrent."
+      },
+      "CostsAndExpenses": {
+        "units": {
+          "USD": [
+            {
+              "start": "2024-06-01",
+              "end": "2025-05-31",
+              "val": 39721000000,
+              "accn": "0000950170-25-087926",
+              "fy": 2025,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2025-06-18"
+            },
+            {
+              "start": "2024-06-01",
+              "end": "2025-05-31",
+              "val": 39721000000,
+              "accn": "0001193125-26-277521",
+              "fy": 2026,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-06-22",
+              "frame": "CY2024"
+            },
+            {
+              "start": "2025-06-01",
+              "end": "2026-05-31",
+              "val": 46751000000,
+              "accn": "0001193125-26-277521",
+              "fy": 2026,
+              "fp": "FY",
+              "form": "10-K",
+              "filed": "2026-06-22",
+              "frame": "CY2025"
+            }
+          ]
+        },
+        "label": "Costs and Expenses",
+        "description": "Total costs of sales and operating expenses for the period."
       }
     }
   }

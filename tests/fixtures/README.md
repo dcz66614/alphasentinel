@@ -155,10 +155,15 @@ for the kept periods. Nothing was added to fill the gap.
 - Source URL: https://data.sec.gov/api/xbrl/companyfacts/CIK0001326801.json
 - Period ends kept: 2024-12-31, 2025-12-31
 - File: `meta_companyfacts_excerpt.json`
-- `CommonStockSharesOutstanding` is not in the response. The excerpt keeps
-  `WeightedAverageNumberOfSharesOutstandingBasic` and
-  `WeightedAverageNumberOfDilutedSharesOutstanding` for those ends. Those are
-  duration facts used for earnings per share.
+- `CommonStockSharesOutstanding` is not in the response. The `dei` namespace
+  in that response has `EntityPublicFloat` and does not have
+  `EntityCommonStockSharesOutstanding`. The excerpt keeps the fy 2024 and
+  fy 2025 10-K `EntityPublicFloat` facts. Those ends are 2024-06-30 and
+  2025-06-30. They are not period-end shares.
+- The excerpt keeps `WeightedAverageNumberOfSharesOutstandingBasic` and
+  `WeightedAverageNumberOfDilutedSharesOutstanding` for the balance-sheet
+  ends. Those are duration facts used for earnings per share.
+  `shares_outstanding` stays NULL. The weighted average is not used.
 
 ### AMZN
 
@@ -168,10 +173,23 @@ for the kept periods. Nothing was added to fill the gap.
 - File: `amzn_companyfacts_excerpt.json`
 - Selling and marketing is `MarketingExpense`. The response has no
   `SellingAndMarketingExpense` and no `SellingGeneralAndAdministrativeExpense`.
-- The response has no `ResearchAndDevelopmentExpense`.
+- The response has no `ResearchAndDevelopmentExpense`. No concept name or
+  label in the response contains Technology, Fulfillment, or infrastructure.
+  `rd_expense` stays NULL.
 - `Liabilities` is absent. `LiabilitiesNoncurrent` 10-K facts in the response
   end in 2011, so those older facts are kept as well. They are not 2024 or 2025
   balances.
+- `StockholdersEquity` and `LiabilitiesAndStockholdersEquity` are kept for
+  the two period ends. `LiabilitiesAndStockholdersEquity` equals `Assets` on
+  each own-year fact. The response has no
+  `StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest`
+  and no `MinorityInterest` balance. `total_liabilities` is derived as
+  `Assets` minus `StockholdersEquity` for that same period on the year's own
+  10-K, and the record marks the field derived.
+- `dei:EntityCommonStockSharesOutstanding` 10-K facts for fy 2024 and fy 2025
+  are kept. Their ends are 2025-01-29 and 2026-01-28, the cover dates, not
+  2024-12-31 or 2025-12-31. They are not used as `shares_outstanding`. The
+  period-end count remains `CommonStockSharesOutstanding`.
 
 ### ORCL
 
@@ -183,7 +201,11 @@ for the kept periods. Nothing was added to fill the gap.
   `LongTermDebtNoncurrent` on these ends.
 - `LongTermDebt` has one 10-K fact in the response, end 2022-05-31, value 0.
   That fact is kept. `CostOfRevenue` 10-K facts stop in 2011 and are kept.
-  Neither is a 2025 or 2026 amount.
+  Neither is a 2025 or 2026 amount. The response has no
+  `CostOfGoodsAndServicesSold`. `cogs` stays NULL.
+- `CostsAndExpenses` for the two period ends is kept. Its label is the total
+  of costs and expenses. It is not used as cost of revenue, and it is not
+  subtracted down to a cost-of-revenue figure.
 
 ### GOOGL
 
@@ -205,6 +227,7 @@ for the kept periods. Nothing was added to fill the gap.
 - File: `pltr_companyfacts_excerpt.json`
 - `LongTermDebtNoncurrent` 10-K facts in the response stop at 2021-12-31,
   including a zero. Those facts are kept. The 2024 and 2025 10-Ks do not
-  repeat the tag.
+  repeat the tag, and they do not contain another long-term debt fact of
+  zero. That 2021 zero is not carried forward. `long_term_debt` stays NULL.
 - `OperatingLeaseLiabilityNoncurrent` for the two kept ends is a lease
-  liability, not that debt line.
+  liability, not that debt line. It is not used as `long_term_debt`.

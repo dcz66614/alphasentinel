@@ -10,9 +10,16 @@ columns. A period is the annual span ending on `end` (about 300 to 380 days).
 The year's own 10-K is the fact whose `fy` equals that end year. Later filings
 that repeat the same end are comparative columns and are not substituted.
 
-No financial amount is filled in, carried forward, or scaled. A missing XBRL
-concept, price, or insider trade raises IngestError for that ticker. The
-batch records the reason and continues with the other tickers.
+No financial amount is filled in, carried forward, or scaled. Weighted-average
+shares are not period-end shares. A dei cover-page share count is used only
+when that fact's end is the period end. Total liabilities may be derived as
+assets minus stockholders' equity when both are on the year's own 10-K for
+that period; the record marks that field derived. cogs, rd_expense,
+long_term_debt, total_liabilities, and shares_outstanding stay NULL when the
+10-K does not report them and they cannot be derived. Those NULL fields do
+not fail the ticker. Any other missing concept, price, or insider trade
+raises IngestError for that ticker. The batch records the reason and
+continues with the other tickers. Nothing missing is stored as zero.
 """
 
 from __future__ import annotations
@@ -98,6 +105,31 @@ INSTANT_CONCEPTS: dict[str, tuple[str, ...]] = {
     # Period-end shares. Weighted-average shares are an EPS flow, not this balance.
     "shares_outstanding": ("CommonStockSharesOutstanding",),
 }
+
+# Cover-page shares. Accepted only when the fact end is the balance-sheet date.
+DEI_SHARES_OUTSTANDING = ("EntityCommonStockSharesOutstanding",)
+
+# Equity including noncontrolling interest is the total equity side.
+# Parent equity is that total only when the same period reports no NCI line.
+EQUITY_INCLUDING_NCI = (
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+)
+EQUITY_PARENT = ("StockholdersEquity",)
+NCI_CONCEPTS = (
+    "MinorityInterest",
+    "RedeemableNoncontrollingInterestEquityCarryingAmount",
+)
+
+# Unreported lines stay NULL. They do not fail the ticker and are not zero.
+NULL_IF_UNREPORTED = frozenset(
+    {
+        "cogs",
+        "rd_expense",
+        "long_term_debt",
+        "total_liabilities",
+        "shares_outstanding",
+    }
+)
 
 SGA_AGGREGATE = "SellingGeneralAndAdministrativeExpense"
 # Combined selling line first. MarketingExpense is that line when the filer
@@ -246,8 +278,10 @@ def _choose_fact(
     return max(pool, key=_filed_key)
 
 
-def _concept_rows(payload: dict[str, Any], name: str, unit: str) -> list[dict[str, Any]]:
-    node = payload.get("facts", {}).get("us-gaap", {}).get(name)
+def _concept_rows(
+    payload: dict[str, Any], name: str, unit: str, *, namespace: str = "us-gaap"
+) -> list[dict[str, Any]]:
+    node = payload.get("facts", {}).get(namespace, {}).get(name)
     if not node:
         return []
     rows = node.get("units", {}).get(unit, [])
@@ -270,6 +304,7 @@ def _pick_value(
     flow: bool,
     unit: str,
     accession: str | None,
+    namespace: str = "us-gaap",
 ) -> tuple[float, dict[str, Any]] | None:
     """Read the first tag that has this period on the year's own 10-K.
 
@@ -280,7 +315,7 @@ def _pick_value(
     end_year = int(period_end[:4])
     fallback: tuple[float, dict[str, Any]] | None = None
     for name in names:
-        rows = _concept_rows(payload, name, unit)
+        rows = _concept_rows(payload, name, unit, namespace=namespace)
         candidates = _period_candidates(rows, period_end, flow=flow)
         if not candidates:
             continue
@@ -330,9 +365,62 @@ def _resolve_sga(
     return selling[0] + admin[0]
 
 
-def _resolve_total_liabilities(
+def _own_year_amount(
+    payload: dict[str, Any],
+    names: tuple[str, ...],
+    period_end: str,
+    accession: str | None,
+) -> tuple[float, dict[str, Any]] | None:
+    """Own-year 10-K amount. A comparative column (``fy`` is not the end year) is not used."""
+    picked = _pick_value(
+        payload, names, period_end, flow=False, unit="USD", accession=accession
+    )
+    if picked is None:
+        return None
+    if picked[1].get("fy") != int(period_end[:4]):
+        return None
+    return picked
+
+
+def _resolve_shares(
     payload: dict[str, Any], period_end: str, accession: str | None
 ) -> float | None:
+    """Period-end shares. The dei cover count is used only on this period end."""
+    reported = _pick_value(
+        payload,
+        INSTANT_CONCEPTS["shares_outstanding"],
+        period_end,
+        flow=False,
+        unit="shares",
+        accession=accession,
+    )
+    if reported is not None:
+        return reported[0]
+    cover = _pick_value(
+        payload,
+        DEI_SHARES_OUTSTANDING,
+        period_end,
+        flow=False,
+        unit="shares",
+        accession=accession,
+        namespace="dei",
+    )
+    if cover is None or cover[1].get("fy") != int(period_end[:4]):
+        return None
+    return cover[0]
+
+
+def _resolve_total_liabilities(
+    payload: dict[str, Any], period_end: str, accession: str | None
+) -> tuple[float | None, bool]:
+    """Total liabilities, and whether the amount is derived.
+
+    Reported ``Liabilities`` wins. Otherwise current plus noncurrent, when both
+    are reported for this period. Otherwise derived: total assets minus
+    stockholders' equity, and only when both are on the year's own 10-K for
+    this period. Parent equity is used only when that period reports no
+    noncontrolling-interest line. The caller marks a derived amount ``derived``.
+    """
     direct = _pick_value(
         payload,
         INSTANT_CONCEPTS["total_liabilities"],
@@ -342,7 +430,7 @@ def _resolve_total_liabilities(
         accession=accession,
     )
     if direct is not None:
-        return direct[0]
+        return direct[0], False
     current = _pick_value(
         payload,
         (LIABILITIES_CURRENT,),
@@ -359,9 +447,39 @@ def _resolve_total_liabilities(
         unit="USD",
         accession=accession,
     )
-    if current is None or noncurrent is None:
-        return None
-    return current[0] + noncurrent[0]
+    if current is not None and noncurrent is not None:
+        return current[0] + noncurrent[0], False
+
+    assets = _own_year_amount(payload, ("Assets",), period_end, accession)
+    if assets is None:
+        return None, False
+    total_equity = _own_year_amount(payload, EQUITY_INCLUDING_NCI, period_end, accession)
+    if total_equity is not None:
+        # derived: total liabilities = total assets - stockholders' equity
+        return assets[0] - total_equity[0], True
+    parent_equity = _own_year_amount(payload, EQUITY_PARENT, period_end, accession)
+    if parent_equity is None:
+        return None, False
+    for name in NCI_CONCEPTS:
+        if _own_year_amount(payload, (name,), period_end, accession) is not None:
+            return None, False
+    # derived: total liabilities = total assets - stockholders' equity
+    return assets[0] - parent_equity[0], True
+
+
+def _assign(
+    values: dict[str, float | None],
+    missing: list[str],
+    column: str,
+    value: float | None,
+) -> None:
+    if value is None and column in NULL_IF_UNREPORTED:
+        values[column] = None
+        return
+    if value is None:
+        missing.append(column)
+        return
+    values[column] = value
 
 
 def _try_period(
@@ -380,7 +498,7 @@ def _try_period(
     revenue_value, revenue_fact = revenue
     accession = str(revenue_fact.get("accn") or "")
     missing: list[str] = []
-    values: dict[str, float] = {"revenue": revenue_value}
+    values: dict[str, float | None] = {"revenue": revenue_value}
 
     for column, names in FLOW_CONCEPTS.items():
         if column == "revenue":
@@ -388,34 +506,28 @@ def _try_period(
         picked = _pick_value(
             payload, names, period_end, flow=True, unit="USD", accession=accession
         )
-        if picked is None:
-            missing.append(column)
-        else:
-            values[column] = picked[0]
+        _assign(values, missing, column, None if picked is None else picked[0])
 
-    sga = _resolve_sga(payload, period_end, accession)
-    if sga is None:
-        missing.append("sga")
-    else:
-        values["sga"] = sga
+    _assign(values, missing, "sga", _resolve_sga(payload, period_end, accession))
 
     for column, names in INSTANT_CONCEPTS.items():
-        if column == "total_liabilities":
+        if column in {"total_liabilities", "shares_outstanding"}:
             continue
-        unit = "shares" if column == "shares_outstanding" else "USD"
         picked = _pick_value(
-            payload, names, period_end, flow=False, unit=unit, accession=accession
+            payload, names, period_end, flow=False, unit="USD", accession=accession
         )
-        if picked is None:
-            missing.append(column)
-        else:
-            values[column] = picked[0]
+        _assign(values, missing, column, None if picked is None else picked[0])
 
-    liabilities = _resolve_total_liabilities(payload, period_end, accession)
-    if liabilities is None:
-        missing.append("total_liabilities")
-    else:
-        values["total_liabilities"] = liabilities
+    _assign(
+        values,
+        missing,
+        "shares_outstanding",
+        _resolve_shares(payload, period_end, accession),
+    )
+    liabilities, liabilities_derived = _resolve_total_liabilities(
+        payload, period_end, accession
+    )
+    _assign(values, missing, "total_liabilities", liabilities)
 
     if missing:
         return None, missing
@@ -429,7 +541,12 @@ def _try_period(
     if not start or not filed or not form or not accession:
         return None, ["filing metadata"]
 
-    values["working_capital"] = values["current_assets"] - values["current_liabilities"]
+    current_assets = values["current_assets"]
+    current_liabilities = values["current_liabilities"]
+    if current_assets is None or current_liabilities is None:
+        return None, ["working_capital"]
+    values["working_capital"] = current_assets - current_liabilities
+    derived_fields = ("total_liabilities",) if liabilities_derived else ()
     record = {
         "company_name": company_name,
         "fiscal_year": int(period_end[:4]),
@@ -438,6 +555,7 @@ def _try_period(
         "filing_form": form,
         "filing_date": filed,
         "accession": accession,
+        "derived_fields": derived_fields,
         **values,
     }
     return record, []
@@ -449,7 +567,10 @@ def normalize_company_facts(
     """Map a SEC companyfacts document to annual 10-K rows.
 
     Raises IngestError when one of the latest annual periods is missing a
-    required concept. Nothing is inserted as zero in that case.
+    required concept. Unreported cogs, rd_expense, long_term_debt,
+    total_liabilities, and shares_outstanding are NULL. A derived total
+    liabilities value is listed in ``derived_fields``. Nothing is inserted
+    as zero in place of a missing amount.
     """
     ends = _annual_period_ends(payload)
     if not ends:
@@ -886,8 +1007,11 @@ def _rows_from_cache(cache_dir: Path, ticker: str, *, offline: bool) -> list[dic
         ratio = insider_net_sell_ratio(
             xml_documents, record["period_start"], record["period_end"]
         )
-        market_cap = market_cap_from_prices(
-            prices, record["period_end"], record["shares_outstanding"]
+        shares = record["shares_outstanding"]
+        market_cap = (
+            None
+            if shares is None
+            else market_cap_from_prices(prices, record["period_end"], shares)
         )
         rows.append(
             {
@@ -902,6 +1026,12 @@ def _rows_from_cache(cache_dir: Path, ticker: str, *, offline: bool) -> list[dic
             }
         )
     return rows
+
+
+def _stored_amount(value: float | None) -> float | None:
+    if value is None:
+        return None
+    return float(value)
 
 
 def _insert_rows(db_path: Path, rows: list[dict[str, Any]]) -> int:
@@ -920,9 +1050,9 @@ def _insert_rows(db_path: Path, rows: list[dict[str, Any]]) -> int:
                     row["filing_date"],
                     row["data_source_mode"],
                     float(row["revenue"]),
-                    float(row["cogs"]),
+                    _stored_amount(row["cogs"]),
                     float(row["sga"]),
-                    float(row["rd_expense"]),
+                    _stored_amount(row["rd_expense"]),
                     float(row["depreciation"]),
                     float(row["ebit"]),
                     float(row["net_income"]),
@@ -932,12 +1062,12 @@ def _insert_rows(db_path: Path, rows: list[dict[str, Any]]) -> int:
                     float(row["ppe"]),
                     float(row["total_assets"]),
                     float(row["current_liabilities"]),
-                    float(row["long_term_debt"]),
-                    float(row["total_liabilities"]),
+                    _stored_amount(row["long_term_debt"]),
+                    _stored_amount(row["total_liabilities"]),
                     float(row["retained_earnings"]),
                     float(row["working_capital"]),
-                    float(row["shares_outstanding"]),
-                    float(row["market_cap"]),
+                    _stored_amount(row["shares_outstanding"]),
+                    _stored_amount(row["market_cap"]),
                     int(row["ai_mention_count"]),
                     int(row["total_word_count"]),
                     float(row["insider_net_sell_ratio"]),
@@ -956,9 +1086,11 @@ def ingest_tickers(
 ) -> IngestBatch:
     """Load 10-K rows into DuckDB. Offline never calls the network.
 
-    A ticker with a missing concept, price, or Form 4 trade is recorded and
-    skipped. Other tickers are still written. An offline cache miss still
-    raises CacheMissError. No missing amount is stored as zero.
+    A ticker with a missing required concept, price, or Form 4 trade is
+    recorded and skipped. Other tickers are still written. An unreported
+    cogs, rd_expense, long_term_debt, total_liabilities, or shares_outstanding
+    is stored as NULL and does not skip the ticker. An offline cache miss
+    still raises CacheMissError. No missing amount is stored as zero.
     """
     symbols = parse_tickers(tickers)
     cache = Path(cache_dir) if cache_dir is not None else DEFAULT_CACHE_DIR
