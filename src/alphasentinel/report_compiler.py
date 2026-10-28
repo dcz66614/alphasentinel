@@ -8,6 +8,7 @@ from typing import Any
 
 import duckdb
 from docx import Document
+from docx.shared import Pt
 
 from alphasentinel.db_schema import DEFAULT_DUCKDB_PATH
 
@@ -135,6 +136,101 @@ def _write_docx(rows: list[dict[str, Any]], path: Path) -> None:
     else:
         document.add_paragraph("无数据：forensic_scores 表为空。")
     document.save(path)
+
+
+def render_markdown_to_docx(
+    markdown_text: str, output_docx_path: Path, title: str | None = None
+) -> Path:
+    """Render structured Markdown (headings, tables, code blocks, lists) into a .docx file."""
+    output_docx_path.parent.mkdir(parents=True, exist_ok=True)
+    doc = Document()
+    if title:
+        doc.add_heading(title, level=0)
+
+    lines = markdown_text.splitlines()
+    i = 0
+    in_code_block = False
+    code_buffer: list[str] = []
+
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.strip()
+
+        if stripped.startswith("```"):
+            if not in_code_block:
+                in_code_block = True
+                code_buffer = []
+            else:
+                in_code_block = False
+                p = doc.add_paragraph()
+                p.paragraph_format.space_before = Pt(4)
+                p.paragraph_format.space_after = Pt(4)
+                run = p.add_run("\n".join(code_buffer))
+                run.font.name = "Courier New"
+                run.font.size = Pt(9.5)
+            i += 1
+            continue
+
+        if in_code_block:
+            code_buffer.append(line)
+            i += 1
+            continue
+
+        if stripped.startswith("|") and stripped.endswith("|"):
+            table_rows: list[list[str]] = []
+            while (
+                i < len(lines)
+                and lines[i].strip().startswith("|")
+                and lines[i].strip().endswith("|")
+            ):
+                row_str = lines[i].strip()
+                content = row_str.replace("|", "").replace("-", "").replace(":", "").strip()
+                if content:
+                    cells = [c.strip() for c in row_str.strip("|").split("|")]
+                    table_rows.append(cells)
+                i += 1
+            if table_rows:
+                num_cols = max(len(r) for r in table_rows)
+                tbl = doc.add_table(rows=len(table_rows), cols=num_cols)
+                tbl.style = "Table Grid"
+                for r_idx, r_cells in enumerate(table_rows):
+                    for c_idx in range(min(len(r_cells), num_cols)):
+                        cell_obj = tbl.cell(r_idx, c_idx)
+                        cell_obj.text = r_cells[c_idx]
+                        if r_idx == 0:
+                            for p in cell_obj.paragraphs:
+                                for r in p.runs:
+                                    r.bold = True
+            continue
+
+        if stripped.startswith("# "):
+            if not title:
+                doc.add_heading(stripped[2:], level=0)
+            else:
+                doc.add_heading(stripped[2:], level=1)
+        elif stripped.startswith("## "):
+            doc.add_heading(stripped[3:], level=2)
+        elif stripped.startswith("### "):
+            doc.add_heading(stripped[4:], level=3)
+        elif stripped.startswith("#### "):
+            doc.add_heading(stripped[5:], level=4)
+        elif stripped.startswith("- "):
+            doc.add_paragraph(stripped[2:], style="List Bullet")
+        elif stripped:
+            doc.add_paragraph(stripped)
+
+        i += 1
+
+    if in_code_block and code_buffer:
+        p = doc.add_paragraph()
+        p.paragraph_format.space_before = Pt(4)
+        p.paragraph_format.space_after = Pt(4)
+        run = p.add_run("\n".join(code_buffer))
+        run.font.name = "Courier New"
+        run.font.size = Pt(9.5)
+
+    doc.save(str(output_docx_path))
+    return output_docx_path
 
 
 def compile_report(
