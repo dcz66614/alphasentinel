@@ -10,10 +10,11 @@ Beneish coefficients are the eight-variable model in Messod D. Beneish,
 (1999). The identity check sets every index to 1 and TATA to 0.05, which is
 arithmetic on those coefficients, not a set of financial statements.
 
-SEC amounts come from tests/fixtures or from data/cache companyfacts that the
-ingestor normalizes. This file does not type those amounts. Placeholder zeros
-are the same device as test_schema.py: they satisfy NOT NULL columns and are
-not financial figures.
+SEC amounts come from tests/fixtures. The offline cache under
+tests/fixtures/offline_cache is a cut of the download described in
+tests/fixtures/README.md. This file does not type those amounts. Placeholder
+zeros are the same device as test_schema.py: they satisfy NOT NULL columns
+and are not financial figures.
 """
 
 from __future__ import annotations
@@ -39,10 +40,9 @@ from alphasentinel.forensic_engine import (
 )
 from alphasentinel.ingestor import ingest_tickers, normalize_company_facts
 
-ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = Path(__file__).parent / "fixtures"
 AAPL_FIXTURE = FIXTURES / "aapl_companyfacts_excerpt.json"
-CACHE = ROOT / "data" / "cache"
+FIXTURE_CACHE = FIXTURES / "offline_cache"
 
 # AccountingTools worked example. Market value of equity is market_cap here.
 ACCOUNTINGTOOLS_ALTMAN = {
@@ -216,7 +216,7 @@ def _paper_piotroski(curr: dict, prev: dict, prev2: dict) -> int:
 
 
 def test_piotroski_and_beneish_on_three_normalized_aapl_years() -> None:
-    payload = _load_json(CACHE / "AAPL" / "companyfacts.json")
+    payload = _load_json(FIXTURE_CACHE / "AAPL" / "companyfacts.json")
     rows = normalize_company_facts(payload, max_years=3)
     by_year = {int(row["fiscal_year"]): row for row in rows}
     year = max(by_year)
@@ -278,7 +278,7 @@ def _paper_ai(curr: dict, prev: dict) -> dict[str, float | str]:
 def test_pipeline_on_offline_sec_cache(tmp_path: Path) -> None:
     database = tmp_path / "forensic.duckdb"
     written = ingest_tickers(
-        ["AAPL", "MSFT"], db_path=database, cache_dir=CACHE, offline=True
+        ["AAPL", "MSFT"], db_path=database, cache_dir=FIXTURE_CACHE, offline=True
     )
     assert written == 4
     results = run_forensic_pipeline(database)

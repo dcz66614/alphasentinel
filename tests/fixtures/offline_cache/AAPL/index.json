@@ -1,0 +1,36 @@
+{
+  "ticker": "AAPL",
+  "cik": 320193,
+  "companyfacts": "companyfacts.json",
+  "companyfacts_url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+  "submissions": [
+    "submissions/CIK0000320193.json"
+  ],
+  "submissions_urls": [
+    "https://data.sec.gov/submissions/CIK0000320193.json"
+  ],
+  "prices": "prices.csv",
+  "prices_source": "yfinance.Ticker.history auto_adjust=false",
+  "years": [
+    {
+      "fiscal_year": 2024,
+      "period_start": "2023-10-01",
+      "period_end": "2024-09-28",
+      "accession": "0000320193-24-000123",
+      "filing": "filings/0000320193-24-000123/aapl-20240928.htm",
+      "form4": [
+        "ownership/0000320193-23-000113.xml"
+      ]
+    },
+    {
+      "fiscal_year": 2025,
+      "period_start": "2024-09-29",
+      "period_end": "2025-09-27",
+      "accession": "0000320193-25-000079",
+      "filing": "filings/0000320193-25-000079/aapl-20250927.htm",
+      "form4": [
+        "ownership/0000320193-24-000129.xml"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "cik": "0000789019",
+  "entityType": "operating",
+  "sic": "7372",
+  "sicDescription": "Services-Prepackaged Software",
+  "name": "MICROSOFT CORP",
+  "tickers": [
+    "MSFT"
+  ],
+  "exchanges": [
+    "Nasdaq"
+  ]
+}

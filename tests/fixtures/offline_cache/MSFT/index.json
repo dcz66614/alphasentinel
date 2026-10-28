@@ -1,0 +1,36 @@
+{
+  "ticker": "MSFT",
+  "cik": 789019,
+  "companyfacts": "companyfacts.json",
+  "companyfacts_url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json",
+  "submissions": [
+    "submissions/CIK0000789019.json"
+  ],
+  "submissions_urls": [
+    "https://data.sec.gov/submissions/CIK0000789019.json"
+  ],
+  "prices": "prices.csv",
+  "prices_source": "yfinance.Ticker.history auto_adjust=false",
+  "years": [
+    {
+      "fiscal_year": 2025,
+      "period_start": "2024-07-01",
+      "period_end": "2025-06-30",
+      "accession": "0000950170-25-100235",
+      "filing": "filings/0000950170-25-100235/msft-20250630.htm",
+      "form4": [
+        "ownership/0001062993-24-019650.xml"
+      ]
+    },
+    {
+      "fiscal_year": 2026,
+      "period_start": "2025-07-01",
+      "period_end": "2026-06-30",
+      "accession": "0001193125-26-323660",
+      "filing": "filings/0001193125-26-323660/msft-20260630.htm",
+      "form4": [
+        "ownership/0000789019-26-000048.xml"
+      ]
+    }
+  ]
+}
